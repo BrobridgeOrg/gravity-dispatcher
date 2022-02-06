@@ -14,12 +14,12 @@ import (
 var logger *zap.Logger
 
 type Dispatcher struct {
-	config                *configs.Config
-	connector             *connector.Connector
-	collectionConfigStore *config_store.ConfigStore
-	collectionManager     *CollectionManager
-	watcher               *EventWatcher
-	processor             *Processor
+	config                 *configs.Config
+	connector              *connector.Connector
+	dataProductConfigStore *config_store.ConfigStore
+	dataProductManager     *DataProductManager
+	watcher                *EventWatcher
+	processor              *Processor
 }
 
 func New(config *configs.Config, l *zap.Logger, c *connector.Connector) *Dispatcher {
@@ -31,16 +31,16 @@ func New(config *configs.Config, l *zap.Logger, c *connector.Connector) *Dispatc
 		connector: c,
 	}
 
-	d.collectionManager = NewCollectionManager(d)
+	d.dataProductManager = NewDataProductManager(d)
 	d.processor = NewProcessor(
 		WithOutputHandler(func(msg *message.Message) {
 			d.dispatch(msg)
 		}),
 	)
-	d.collectionConfigStore = config_store.NewConfigStore(c,
+	d.dataProductConfigStore = config_store.NewConfigStore(c,
 		config_store.WithDomain(c.GetDomain()),
 		config_store.WithCatalog("COLLECTION"),
-		config_store.WithEventHandler(d.collectionSettingsUpdated),
+		config_store.WithEventHandler(d.dataProductSettingsUpdated),
 	)
 
 	err := d.initialize()
@@ -52,30 +52,30 @@ func New(config *configs.Config, l *zap.Logger, c *connector.Connector) *Dispatc
 	return d
 }
 
-func (d *Dispatcher) collectionSettingsUpdated(op config_store.ConfigOp, collectionName string, data []byte) {
+func (d *Dispatcher) dataProductSettingsUpdated(op config_store.ConfigOp, dataProductName string, data []byte) {
 
-	logger.Info("Syncing collection settings",
-		zap.String("collection", collectionName),
+	logger.Info("Syncing data product settings",
+		zap.String("dataProduct", dataProductName),
 	)
 
-	var setting CollectionSetting
+	var setting DataProductSetting
 	err := json.Unmarshal(data, &setting)
 	if err != nil {
 		logger.Error(err.Error())
 		return
 	}
 
-	// Delete collection
+	// Delete dataProduct
 	if op == config_store.ConfigDelete {
-		d.collectionManager.DeleteCollection(collectionName)
+		d.dataProductManager.DeleteDataProduct(dataProductName)
 		return
 	}
 
-	// Create or update collection
-	err = d.collectionManager.ApplySettings(collectionName, &setting)
+	// Create or update dataProduct
+	err = d.dataProductManager.ApplySettings(dataProductName, &setting)
 	if err != nil {
-		logger.Error("Failed to load collection settings",
-			zap.String("collection", collectionName),
+		logger.Error("Failed to load data product settings",
+			zap.String("data product", dataProductName),
 		)
 		logger.Error(err.Error())
 		return
@@ -84,7 +84,7 @@ func (d *Dispatcher) collectionSettingsUpdated(op config_store.ConfigOp, collect
 
 func (d *Dispatcher) initialize() error {
 
-	err := d.collectionConfigStore.Init()
+	err := d.dataProductConfigStore.Init()
 	if err != nil {
 		return err
 	}
@@ -104,7 +104,7 @@ func (d *Dispatcher) registerEvents() {
 */
 func (d *Dispatcher) dispatch(msg *message.Message) {
 
-	subject := fmt.Sprintf("GRAVITY.%s.COLLECTION.%s.%d.EVENT.%s",
+	subject := fmt.Sprintf("GRAVITY.%s.DP.%s.%d.EVENT.%s",
 		d.connector.GetDomain(),
 		msg.Record.Table,
 		msg.Partition,
@@ -121,7 +121,7 @@ func (d *Dispatcher) dispatch(msg *message.Message) {
 
 	go func() {
 
-		// Publish to collection stream
+		// Publish to dataProduct stream
 		future, err := js.PublishAsync(subject, msg.RawRecord)
 		if err != nil {
 			logger.Error(err.Error())

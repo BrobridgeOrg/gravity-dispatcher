@@ -5,7 +5,7 @@ import "github.com/BrobridgeOrg/schemer"
 type Rule struct {
 	ID            string                 `json:"id"`
 	Event         string                 `json:"event"`
-	Collection    string                 `json:"collection"`
+	DataProduct   string                 `json:"dataProduct"`
 	Method        string                 `json:"method"`
 	PrimaryKey    []string               `json:"primaryKey"`
 	SchemaConfig  map[string]interface{} `json:"schema,omitempty"`

@@ -11,92 +11,92 @@ import (
 	"go.uber.org/zap"
 )
 
-type CollectionSetting struct {
+type DataProductSetting struct {
 	Name        string                `json:"name"`
 	Description string                `json:"desc"`
 	Rules       *rule_manager.RuleSet `json:"rules"`
 }
 
-type CollectionManager struct {
-	dispatcher  *Dispatcher
-	collections sync.Map
+type DataProductManager struct {
+	dispatcher   *Dispatcher
+	dataProducts sync.Map
 }
 
-func NewCollectionManager(d *Dispatcher) *CollectionManager {
-	return &CollectionManager{
+func NewDataProductManager(d *Dispatcher) *DataProductManager {
+	return &DataProductManager{
 		dispatcher: d,
 	}
 }
 
-func (cm *CollectionManager) CreateCollection(name string) *Collection {
+func (cm *DataProductManager) CreateDataProduct(name string) *DataProduct {
 
-	c := NewCollection(cm)
+	c := NewDataProduct(cm)
 	c.Name = name
 
 	// Generate ID
 	id, _ := uuid.NewUUID()
 	c.ID = id.String()
 
-	cm.collections.Store(name, c)
+	cm.dataProducts.Store(name, c)
 
 	return c
 }
 
-func (cm *CollectionManager) DeleteCollection(name string) {
+func (cm *DataProductManager) DeleteDataProduct(name string) {
 
-	v, ok := cm.collections.LoadAndDelete(name)
+	v, ok := cm.dataProducts.LoadAndDelete(name)
 	if !ok {
 		return
 	}
 
-	c := v.(*Collection)
+	c := v.(*DataProduct)
 	c.StopEventWatcher()
 }
 
-func (cm *CollectionManager) GetCollection(name string) *Collection {
+func (cm *DataProductManager) GetDataProduct(name string) *DataProduct {
 
-	c, ok := cm.collections.Load(name)
+	c, ok := cm.dataProducts.Load(name)
 	if !ok {
 		return nil
 	}
 
-	return c.(*Collection)
+	return c.(*DataProduct)
 }
 
-func (cm *CollectionManager) ApplySettings(name string, setting *CollectionSetting) error {
+func (cm *DataProductManager) ApplySettings(name string, setting *DataProductSetting) error {
 
-	v, ok := cm.collections.Load(name)
+	v, ok := cm.dataProducts.Load(name)
 	if ok {
-		// New collection
-		c := cm.CreateCollection(name)
+		// New dataProduct
+		c := cm.CreateDataProduct(name)
 		c.ApplyRules(setting.Rules)
 		return c.StartEventWatcher()
 	}
 
 	// Apply new rules
-	c := v.(*Collection)
+	c := v.(*DataProduct)
 	c.ApplyRules(setting.Rules)
 
 	return nil
 }
 
-type Collection struct {
+type DataProduct struct {
 	ID    string
 	Name  string
 	Rules *rule_manager.RuleManager
 
-	manager *CollectionManager
+	manager *DataProductManager
 	watcher *EventWatcher
 }
 
-func NewCollection(cm *CollectionManager) *Collection {
-	return &Collection{
+func NewDataProduct(cm *DataProductManager) *DataProduct {
+	return &DataProduct{
 		Rules:   rule_manager.NewRuleManager(),
 		manager: cm,
 	}
 }
 
-func (c *Collection) handleMessage(eventName string, msg *nats.Msg) {
+func (c *DataProduct) handleMessage(eventName string, msg *nats.Msg) {
 
 	// Get rules by event
 	rules := c.Rules.GetRulesByEvent(eventName)
@@ -119,7 +119,7 @@ func (c *Collection) handleMessage(eventName string, msg *nats.Msg) {
 	c.manager.dispatcher.processor.Push(m)
 }
 
-func (c *Collection) ApplyRules(ruleSet *rule_manager.RuleSet) error {
+func (c *DataProduct) ApplyRules(ruleSet *rule_manager.RuleSet) error {
 
 	// Preparing new rules
 	rm := rule_manager.NewRuleManager()
@@ -132,7 +132,7 @@ func (c *Collection) ApplyRules(ruleSet *rule_manager.RuleSet) error {
 	return nil
 }
 
-func (c *Collection) StartEventWatcher() error {
+func (c *DataProduct) StartEventWatcher() error {
 
 	connector := c.manager.dispatcher.connector
 
@@ -140,7 +140,7 @@ func (c *Collection) StartEventWatcher() error {
 	c.watcher = NewEventWatcher(
 		connector.GetClient(),
 		connector.GetDomain(),
-		fmt.Sprintf("GRAVITY.%s.COLLECTION.%s", connector.GetDomain(), c.Name),
+		fmt.Sprintf("GRAVITY.%s.DP.%s", connector.GetDomain(), c.Name),
 	)
 	err := c.watcher.Init()
 	if err != nil {
@@ -159,6 +159,6 @@ func (c *Collection) StartEventWatcher() error {
 	return nil
 }
 
-func (c *Collection) StopEventWatcher() error {
+func (c *DataProduct) StopEventWatcher() error {
 	return c.watcher.Stop()
 }

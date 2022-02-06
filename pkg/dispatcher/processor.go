@@ -116,7 +116,7 @@ func (p *Processor) convert(msg *message.Message) (*gravity_sdk_types_record.Rec
 	record := recordPool.Get().(*gravity_sdk_types_record.Record)
 	record.EventName = msg.Data.Event
 	record.Method = gravity_sdk_types_record.Method(gravity_sdk_types_record.Method_value[msg.Rule.Method])
-	record.Table = msg.Rule.Collection
+	record.Table = msg.Rule.DataProduct
 	record.PrimaryKey = string(msg.Data.PrimaryKey)
 
 	// Transforming

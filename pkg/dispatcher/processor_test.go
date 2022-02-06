@@ -18,7 +18,7 @@ func CreateTestRule() *rule_manager.Rule {
 
 	r := rule_manager.NewRule()
 	r.Event = "dataCreated"
-	r.Collection = "TestCollection"
+	r.DataProduct = "TestDataProduct"
 	r.PrimaryKey = []string{
 		"id",
 	}
@@ -46,7 +46,7 @@ func TestProcessorOutput(t *testing.T) {
 	p := NewProcessor(
 		WithOutputHandler(func(msg *message.Message) {
 			assert.Equal(t, "dataCreated", msg.Record.EventName)
-			assert.Equal(t, "TestCollection", msg.Record.Table)
+			assert.Equal(t, "TestDataProduct", msg.Record.Table)
 
 			for _, field := range msg.Record.Fields {
 				switch field.Name {
@@ -89,7 +89,7 @@ func TestProcessorOutputsWithMultipleInputs(t *testing.T) {
 	p := NewProcessor(
 		WithOutputHandler(func(msg *message.Message) {
 			assert.Equal(t, "dataCreated", msg.Record.EventName)
-			assert.Equal(t, "TestCollection", msg.Record.Table)
+			assert.Equal(t, "TestDataProduct", msg.Record.Table)
 
 			count++
 
