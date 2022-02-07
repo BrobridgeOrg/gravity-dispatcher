@@ -128,6 +128,11 @@ func (ew *EventWatcher) Init() error {
 
 func (ew *EventWatcher) Watch(fn func(string, *nats.Msg)) error {
 
+	// Watching already
+	if ew.sub != nil {
+		return nil
+	}
+
 	logger.Info("Starting watch for events...")
 
 	// Preparing JetStream

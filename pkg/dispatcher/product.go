@@ -73,17 +73,12 @@ func (pm *ProductManager) ApplySettings(name string, setting *product_sdk.Produc
 	if ok {
 		// New dataProduct
 		p := pm.CreateProduct(name)
-		p.Enabled = setting.Enabled
-		p.ApplyRules(setting.Rules)
-		return p.StartEventWatcher()
+		return p.ApplySettings(setting)
 	}
 
-	// Apply new rules
+	// Apply new settings
 	p := v.(*Product)
-	p.Enabled = setting.Enabled
-	p.ApplyRules(setting.Rules)
-
-	return nil
+	return p.ApplySettings(setting)
 }
 
 type Product struct {
@@ -142,6 +137,34 @@ func (p *Product) handleMessage(eventName string, msg *nats.Msg) {
 	m.Raw = msg.Data
 
 	p.manager.dispatcher.processor.Push(m)
+}
+
+func (p *Product) ApplySettings(setting *product_sdk.ProductSetting) error {
+
+	// Disable
+	if p.Enabled && p.Enabled != setting.Enabled {
+		err := p.StopEventWatcher()
+		if err != nil {
+			return err
+		}
+
+		p.Enabled = setting.Enabled
+	}
+
+	// Apply new rules
+	p.ApplyRules(setting.Rules)
+
+	// Enable
+	if !p.Enabled && p.Enabled != setting.Enabled {
+		err := p.StartEventWatcher()
+		if err != nil {
+			return err
+		}
+
+		p.Enabled = setting.Enabled
+	}
+
+	return nil
 }
 
 func (p *Product) ApplyRules(ruleSet *product_sdk.RuleSet) error {
