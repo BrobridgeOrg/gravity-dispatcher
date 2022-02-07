@@ -52,6 +52,7 @@ github.com/BrobridgeOrg/broton v0.0.7/go.mod h1:rwy8MFovBA+vVmfrMmepHvHMK9Dhvwmt
 github.com/BrobridgeOrg/gravity-api v0.2.17/go.mod h1:ky6XIYg5h95Cy+QjRQaI6LQABmQfqAAn+SCgbygxWOA=
 github.com/BrobridgeOrg/gravity-api v0.2.25 h1:MjolYO3TFXI2r8FUCo4vNDx0rzwymgDhHmoDCg/x/Is=
 github.com/BrobridgeOrg/gravity-api v0.2.25/go.mod h1:BO4mhqFUk99/sObzTFAxkIn3NMB0nBoQ29kETU9JDB4=
+github.com/BrobridgeOrg/gravity-dispatcher v0.0.0-20220206181110-2ea65aa048be/go.mod h1:FcqEXThgifT/XebUWM8GfCui4OvA0Ca0w4h4UvPaeVI=
 github.com/BrobridgeOrg/gravity-sdk v0.0.15/go.mod h1:vT/C81wbuOwRptqaFVSA+IZdWUvBhYrg+ArDQh+Lg4U=
 github.com/BrobridgeOrg/gravity-sdk v0.0.40/go.mod h1:ys7MFpiYDONGUKCR8pA7qn9AZV9OcqsQd64XEgOwVT0=
 github.com/BrobridgeOrg/gravity-sdk v0.0.50 h1:NhYJ9Kz/C+KEtGTOBYcxWnABCL/GR0jC0BhlXAYjXZQ=

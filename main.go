@@ -54,6 +54,7 @@ func run() error {
 			connector.New,
 		),
 		fx.Invoke(dispatcher.New),
+		fx.NopLogger,
 	).Run()
 
 	return nil

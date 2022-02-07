@@ -6,20 +6,21 @@ import (
 
 	"github.com/BrobridgeOrg/gravity-dispatcher/pkg/configs"
 	"github.com/BrobridgeOrg/gravity-dispatcher/pkg/connector"
-	"github.com/BrobridgeOrg/gravity-dispatcher/pkg/dispatcher/config_store"
 	"github.com/BrobridgeOrg/gravity-dispatcher/pkg/dispatcher/message"
+	"github.com/BrobridgeOrg/gravity-sdk/config_store"
+	product_sdk "github.com/BrobridgeOrg/gravity-sdk/product"
 	"go.uber.org/zap"
 )
 
 var logger *zap.Logger
 
 type Dispatcher struct {
-	config                 *configs.Config
-	connector              *connector.Connector
-	dataProductConfigStore *config_store.ConfigStore
-	dataProductManager     *DataProductManager
-	watcher                *EventWatcher
-	processor              *Processor
+	config             *configs.Config
+	connector          *connector.Connector
+	productConfigStore *config_store.ConfigStore
+	productManager     *ProductManager
+	watcher            *EventWatcher
+	processor          *Processor
 }
 
 func New(config *configs.Config, l *zap.Logger, c *connector.Connector) *Dispatcher {
@@ -31,16 +32,16 @@ func New(config *configs.Config, l *zap.Logger, c *connector.Connector) *Dispatc
 		connector: c,
 	}
 
-	d.dataProductManager = NewDataProductManager(d)
+	d.productManager = NewProductManager(d)
 	d.processor = NewProcessor(
 		WithOutputHandler(func(msg *message.Message) {
 			d.dispatch(msg)
 		}),
 	)
-	d.dataProductConfigStore = config_store.NewConfigStore(c,
+	d.productConfigStore = config_store.NewConfigStore(c.GetClient(),
 		config_store.WithDomain(c.GetDomain()),
-		config_store.WithCatalog("COLLECTION"),
-		config_store.WithEventHandler(d.dataProductSettingsUpdated),
+		config_store.WithCatalog("PRODUCT"),
+		config_store.WithEventHandler(d.productSettingsUpdated),
 	)
 
 	err := d.initialize()
@@ -52,30 +53,30 @@ func New(config *configs.Config, l *zap.Logger, c *connector.Connector) *Dispatc
 	return d
 }
 
-func (d *Dispatcher) dataProductSettingsUpdated(op config_store.ConfigOp, dataProductName string, data []byte) {
+func (d *Dispatcher) productSettingsUpdated(op config_store.ConfigOp, productName string, data []byte) {
 
 	logger.Info("Syncing data product settings",
-		zap.String("dataProduct", dataProductName),
+		zap.String("product", productName),
 	)
 
-	var setting DataProductSetting
+	var setting product_sdk.ProductSetting
 	err := json.Unmarshal(data, &setting)
 	if err != nil {
 		logger.Error(err.Error())
 		return
 	}
 
-	// Delete dataProduct
+	// Delete product
 	if op == config_store.ConfigDelete {
-		d.dataProductManager.DeleteDataProduct(dataProductName)
+		d.productManager.DeleteProduct(productName)
 		return
 	}
 
-	// Create or update dataProduct
-	err = d.dataProductManager.ApplySettings(dataProductName, &setting)
+	// Create or update data product
+	err = d.productManager.ApplySettings(productName, &setting)
 	if err != nil {
 		logger.Error("Failed to load data product settings",
-			zap.String("data product", dataProductName),
+			zap.String("data product", productName),
 		)
 		logger.Error(err.Error())
 		return
@@ -84,7 +85,7 @@ func (d *Dispatcher) dataProductSettingsUpdated(op config_store.ConfigOp, dataPr
 
 func (d *Dispatcher) initialize() error {
 
-	err := d.dataProductConfigStore.Init()
+	err := d.productConfigStore.Init()
 	if err != nil {
 		return err
 	}
@@ -121,7 +122,7 @@ func (d *Dispatcher) dispatch(msg *message.Message) {
 
 	go func() {
 
-		// Publish to dataProduct stream
+		// Publish to product stream
 		future, err := js.PublishAsync(subject, msg.RawRecord)
 		if err != nil {
 			logger.Error(err.Error())

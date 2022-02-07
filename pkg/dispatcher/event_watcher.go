@@ -59,6 +59,10 @@ func (ew *EventWatcher) UnregisterEvent(name string) {
 	delete(ew.events, name)
 }
 
+func (ew *EventWatcher) PurgeEvent() {
+	ew.events = make(map[string]*Event)
+}
+
 func (ew *EventWatcher) GetEvent(name string) *Event {
 
 	if v, ok := ew.events[name]; ok {
@@ -73,8 +77,7 @@ func (ew *EventWatcher) Init() error {
 	logger.Info("Initializing EventWatcher...")
 
 	// Preparing JetStream
-	nc := ew.client.GetConnection()
-	js, err := nc.JetStream()
+	js, err := ew.client.GetJetStream()
 	if err != nil {
 		return err
 	}
@@ -128,8 +131,7 @@ func (ew *EventWatcher) Watch(fn func(string, *nats.Msg)) error {
 	logger.Info("Starting watch for events...")
 
 	// Preparing JetStream
-	nc := ew.client.GetConnection()
-	js, err := nc.JetStream()
+	js, err := ew.client.GetJetStream()
 	if err != nil {
 		return err
 	}

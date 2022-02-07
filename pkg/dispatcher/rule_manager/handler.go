@@ -1,6 +1,7 @@
 package rule_manager
 
 import (
+	product_sdk "github.com/BrobridgeOrg/gravity-sdk/product"
 	"github.com/BrobridgeOrg/schemer"
 )
 
@@ -14,24 +15,19 @@ var HandlerTypes = map[string]HandlerType{
 	"script": HANDLER_SCRIPT,
 }
 
-type HandlerConfig struct {
-	Type   string `json:"type"`
-	Script string `json:"script"`
-}
-
 type Handler struct {
 	Type        HandlerType
 	Script      string
 	Transformer *schemer.Transformer
 }
 
-func NewHandler(config *HandlerConfig) *Handler {
+func NewHandler(config *product_sdk.HandlerConfig, sourceSchema *schemer.Schema) *Handler {
 
 	handler := &Handler{
 		Type: HandlerTypes["script"],
 	}
 
-	handler.Transformer = schemer.NewTransformer(nil, nil)
+	handler.Transformer = schemer.NewTransformer(sourceSchema, nil)
 
 	if config != nil {
 		if t, ok := HandlerTypes[config.Type]; ok {
