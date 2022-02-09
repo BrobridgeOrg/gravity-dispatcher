@@ -1,4 +1,4 @@
-package message
+package dispatcher
 
 import (
 	"encoding/json"
@@ -7,17 +7,20 @@ import (
 
 	"github.com/BrobridgeOrg/gravity-dispatcher/pkg/dispatcher/rule_manager"
 	gravity_sdk_types_record "github.com/BrobridgeOrg/gravity-sdk/types/record"
+	"github.com/BrobridgeOrg/schemer"
 	"github.com/nats-io/nats.go"
 )
 
 type Message struct {
-	Msg       *nats.Msg
-	Rule      *rule_manager.Rule
-	Data      MessageRawData
-	Raw       []byte
-	Partition int32
-	Record    *gravity_sdk_types_record.Record
-	RawRecord []byte
+	Msg          *nats.Msg
+	Product      *Product
+	Rule         *rule_manager.Rule
+	Data         MessageRawData
+	Raw          []byte
+	Partition    int32
+	Record       *gravity_sdk_types_record.Record
+	RawRecord    []byte
+	TargetSchema *schemer.Schema
 }
 
 type MessageRawData struct {
@@ -33,7 +36,7 @@ var MessagePool = sync.Pool{
 	},
 }
 
-func New() *Message {
+func NewMessage() *Message {
 	return MessagePool.Get().(*Message)
 }
 

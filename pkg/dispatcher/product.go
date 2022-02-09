@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/BrobridgeOrg/gravity-dispatcher/pkg/dispatcher/message"
 	"github.com/BrobridgeOrg/gravity-dispatcher/pkg/dispatcher/rule_manager"
 	product_sdk "github.com/BrobridgeOrg/gravity-sdk/product"
+	"github.com/BrobridgeOrg/schemer"
 	"github.com/google/uuid"
 	"github.com/nats-io/nats.go"
 	"go.uber.org/zap"
@@ -20,8 +20,8 @@ type ProductSetting struct {
 }
 
 type ProductManager struct {
-	dispatcher   *Dispatcher
-	dataProducts sync.Map
+	dispatcher *Dispatcher
+	products   sync.Map
 }
 
 func NewProductManager(d *Dispatcher) *ProductManager {
@@ -41,14 +41,14 @@ func (pm *ProductManager) CreateProduct(name string) *Product {
 
 	p.init()
 
-	pm.dataProducts.Store(name, p)
+	pm.products.Store(name, p)
 
 	return p
 }
 
 func (pm *ProductManager) DeleteProduct(name string) {
 
-	v, ok := pm.dataProducts.LoadAndDelete(name)
+	v, ok := pm.products.LoadAndDelete(name)
 	if !ok {
 		return
 	}
@@ -59,7 +59,7 @@ func (pm *ProductManager) DeleteProduct(name string) {
 
 func (pm *ProductManager) GetProduct(name string) *Product {
 
-	v, ok := pm.dataProducts.Load(name)
+	v, ok := pm.products.Load(name)
 	if !ok {
 		return nil
 	}
@@ -69,8 +69,19 @@ func (pm *ProductManager) GetProduct(name string) *Product {
 
 func (pm *ProductManager) ApplySettings(name string, setting *product_sdk.ProductSetting) error {
 
-	v, ok := pm.dataProducts.Load(name)
-	if ok {
+	ruleCount := 0
+	if setting.Rules != nil {
+		ruleCount = len(setting.Rules)
+	}
+
+	logger.Info("Applying product settings",
+		zap.String("name", name),
+		zap.Bool("enabled", setting.Enabled),
+		zap.Int("ruleCount", ruleCount),
+	)
+
+	v, ok := pm.products.Load(name)
+	if !ok {
 		// New dataProduct
 		p := pm.CreateProduct(name)
 		return p.ApplySettings(setting)
@@ -84,8 +95,9 @@ func (pm *ProductManager) ApplySettings(name string, setting *product_sdk.Produc
 type Product struct {
 	ID      string
 	Name    string
-	Rules   *rule_manager.RuleManager
 	Enabled bool
+	Rules   *rule_manager.RuleManager
+	Schema  *schemer.Schema
 
 	manager *ProductManager
 	watcher *EventWatcher
@@ -106,8 +118,9 @@ func (p *Product) init() error {
 	p.watcher = NewEventWatcher(
 		connector.GetClient(),
 		connector.GetDomain(),
-		fmt.Sprintf("GRAVITY.%s.DP.%s", connector.GetDomain(), p.Name),
+		fmt.Sprintf("GRAVITY_%s_DP_%s", connector.GetDomain(), p.Name),
 	)
+
 	err := p.watcher.Init()
 	if err != nil {
 		return err
@@ -131,9 +144,10 @@ func (p *Product) handleMessage(eventName string, msg *nats.Msg) {
 	//meta, _ := msg.Metadata()
 	//fmt.Println(meta.Sequence.Consumer)
 
-	m := message.New()
+	m := NewMessage()
 	m.Msg = msg
 	m.Rule = rules[0]
+	m.Product = p
 	m.Raw = msg.Data
 
 	p.manager.dispatcher.processor.Push(m)
@@ -151,8 +165,21 @@ func (p *Product) ApplySettings(setting *product_sdk.ProductSetting) error {
 		p.Enabled = setting.Enabled
 	}
 
+	// Preparing product schema
+	if setting.Schema != nil {
+		p.Schema = schemer.NewSchema()
+		err := schemer.Unmarshal(setting.Schema, p.Schema)
+		if err != nil {
+			return err
+		}
+	}
+
 	// Apply new rules
-	p.ApplyRules(setting.Rules)
+	rules := make([]*product_sdk.Rule, 0)
+	for _, rule := range setting.Rules {
+		rules = append(rules, rule)
+	}
+	p.ApplyRules(rules)
 
 	// Enable
 	if !p.Enabled && p.Enabled != setting.Enabled {
@@ -167,11 +194,12 @@ func (p *Product) ApplySettings(setting *product_sdk.ProductSetting) error {
 	return nil
 }
 
-func (p *Product) ApplyRules(ruleSet *product_sdk.RuleSet) error {
+func (p *Product) ApplyRules(rules []*product_sdk.Rule) error {
 
 	// Preparing new rules
 	rm := rule_manager.NewRuleManager()
-	for _, r := range ruleSet.List() {
+
+	for _, r := range rules {
 		rule := rule_manager.NewRule(r)
 		rm.AddRule(rule)
 	}

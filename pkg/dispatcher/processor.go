@@ -6,7 +6,6 @@ import (
 	"sync"
 
 	"github.com/BrobridgeOrg/gravity-dispatcher/pkg/dispatcher/converter"
-	"github.com/BrobridgeOrg/gravity-dispatcher/pkg/dispatcher/message"
 	gravity_sdk_types_record "github.com/BrobridgeOrg/gravity-sdk/types/record"
 	sdf "github.com/BrobridgeOrg/sequential-data-flow"
 	"github.com/lithammer/go-jump-consistent-hash"
@@ -20,13 +19,13 @@ var recordPool = sync.Pool{
 
 type Processor struct {
 	flow          *sdf.Flow
-	outputHandler func(*message.Message)
+	outputHandler func(*Message)
 }
 
 func NewProcessor(opts ...func(*Processor)) *Processor {
 
 	p := &Processor{
-		outputHandler: func(*message.Message) {},
+		outputHandler: func(*Message) {},
 	}
 
 	// Apply options
@@ -38,30 +37,30 @@ func NewProcessor(opts ...func(*Processor)) *Processor {
 	options := sdf.NewOptions()
 	options.BufferSize = 1024
 	options.Handler = func(data interface{}, output func(interface{})) {
-		p.handle(data.(*message.Message), output)
+		p.handle(data.(*Message), output)
 	}
 	p.flow = sdf.NewFlow(options)
 
 	go func() {
 		for result := range p.flow.Output() {
-			p.outputHandler(result.(*message.Message))
+			p.outputHandler(result.(*Message))
 		}
 	}()
 
 	return p
 }
 
-func WithOutputHandler(fn func(*message.Message)) func(*Processor) {
+func WithOutputHandler(fn func(*Message)) func(*Processor) {
 	return func(p *Processor) {
 		p.outputHandler = fn
 	}
 }
 
-func (p *Processor) Push(msg *message.Message) {
+func (p *Processor) Push(msg *Message) {
 	p.flow.Push(msg)
 }
 
-func (p *Processor) handle(msg *message.Message, output func(interface{})) {
+func (p *Processor) handle(msg *Message, output func(interface{})) {
 
 	// Parsing raw data
 	err := msg.ParseRawData()
@@ -89,7 +88,7 @@ func (p *Processor) handle(msg *message.Message, output func(interface{})) {
 	output(msg)
 }
 
-func (p *Processor) calculatePrimaryKey(msg *message.Message) {
+func (p *Processor) calculatePrimaryKey(msg *Message) {
 
 	// Getting normalized record from map object
 	record := msg.Rule.Schema.Scan(msg.Data.Payload)
@@ -106,20 +105,21 @@ func (p *Processor) calculatePrimaryKey(msg *message.Message) {
 	msg.Data.PrimaryKey = []byte(pk)
 }
 
-func (p *Processor) calculatePartition(msg *message.Message) {
+func (p *Processor) calculatePartition(msg *Message) {
 	msg.Partition = jump.HashString(string(msg.Data.PrimaryKey), 256, jump.NewCRC64())
 }
 
-func (p *Processor) convert(msg *message.Message) (*gravity_sdk_types_record.Record, error) {
+func (p *Processor) convert(msg *Message) (*gravity_sdk_types_record.Record, error) {
 
 	// Prepare record
 	record := recordPool.Get().(*gravity_sdk_types_record.Record)
 	record.EventName = msg.Data.Event
 	record.Method = gravity_sdk_types_record.Method(gravity_sdk_types_record.Method_value[msg.Rule.Method])
-	record.Table = msg.Rule.DataProduct
+	record.Table = msg.Rule.Product
 	record.PrimaryKey = string(msg.Data.PrimaryKey)
 
 	// Transforming
+	msg.Rule.Handler.Transformer.SetDestinationSchema(msg.Product.Schema)
 	results, err := msg.Rule.Handler.Run(nil, msg.Data.Payload)
 	if err != nil {
 		return nil, err

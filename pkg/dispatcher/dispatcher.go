@@ -6,7 +6,6 @@ import (
 
 	"github.com/BrobridgeOrg/gravity-dispatcher/pkg/configs"
 	"github.com/BrobridgeOrg/gravity-dispatcher/pkg/connector"
-	"github.com/BrobridgeOrg/gravity-dispatcher/pkg/dispatcher/message"
 	"github.com/BrobridgeOrg/gravity-sdk/config_store"
 	product_sdk "github.com/BrobridgeOrg/gravity-sdk/product"
 	"go.uber.org/zap"
@@ -34,7 +33,7 @@ func New(config *configs.Config, l *zap.Logger, c *connector.Connector) *Dispatc
 
 	d.productManager = NewProductManager(d)
 	d.processor = NewProcessor(
-		WithOutputHandler(func(msg *message.Message) {
+		WithOutputHandler(func(msg *Message) {
 			d.dispatch(msg)
 		}),
 	)
@@ -56,7 +55,7 @@ func New(config *configs.Config, l *zap.Logger, c *connector.Connector) *Dispatc
 func (d *Dispatcher) productSettingsUpdated(op config_store.ConfigOp, productName string, data []byte) {
 
 	logger.Info("Syncing data product settings",
-		zap.String("product", productName),
+		zap.String("name", productName),
 	)
 
 	var setting product_sdk.ProductSetting
@@ -76,7 +75,7 @@ func (d *Dispatcher) productSettingsUpdated(op config_store.ConfigOp, productNam
 	err = d.productManager.ApplySettings(productName, &setting)
 	if err != nil {
 		logger.Error("Failed to load data product settings",
-			zap.String("data product", productName),
+			zap.String("product", productName),
 		)
 		logger.Error(err.Error())
 		return
@@ -103,7 +102,7 @@ func (d *Dispatcher) registerEvents() {
 	}
 }
 */
-func (d *Dispatcher) dispatch(msg *message.Message) {
+func (d *Dispatcher) dispatch(msg *Message) {
 
 	subject := fmt.Sprintf("GRAVITY.%s.DP.%s.%d.EVENT.%s",
 		d.connector.GetDomain(),
