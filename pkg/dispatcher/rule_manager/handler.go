@@ -21,13 +21,13 @@ type Handler struct {
 	Transformer *schemer.Transformer
 }
 
-func NewHandler(config *product_sdk.HandlerConfig, sourceSchema *schemer.Schema) *Handler {
+func NewHandler(config *product_sdk.HandlerConfig, sourceSchema *schemer.Schema, targetSchema *schemer.Schema) *Handler {
 
 	handler := &Handler{
 		Type: HandlerTypes["script"],
 	}
 
-	handler.Transformer = schemer.NewTransformer(sourceSchema, nil)
+	handler.Transformer = schemer.NewTransformer(sourceSchema, targetSchema)
 
 	if config != nil {
 		if t, ok := HandlerTypes[config.Type]; ok {

@@ -5,8 +5,8 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/BrobridgeOrg/gravity-dispatcher/pkg/dispatcher/message"
 	"github.com/BrobridgeOrg/gravity-dispatcher/pkg/dispatcher/rule_manager"
+	product_sdk "github.com/BrobridgeOrg/gravity-sdk/product"
 	gravity_sdk_types_record "github.com/BrobridgeOrg/gravity-sdk/types/record"
 	"github.com/d5/tengo/assert"
 	"go.uber.org/zap"
@@ -16,9 +16,9 @@ var testRuleMaanager = rule_manager.NewRuleManager()
 
 func CreateTestRule() *rule_manager.Rule {
 
-	r := rule_manager.NewRule()
+	r := rule_manager.NewRule(product_sdk.NewRule())
 	r.Event = "dataCreated"
-	r.DataProduct = "TestDataProduct"
+	r.Product = "TestDataProduct"
 	r.PrimaryKey = []string{
 		"id",
 	}
@@ -37,6 +37,14 @@ func CreateTestRule() *rule_manager.Rule {
 	return r
 }
 
+func CreateTestMessage() *Message {
+
+	msg := NewMessage()
+	msg.Rule = CreateTestRule()
+
+	return msg
+}
+
 func TestProcessorOutput(t *testing.T) {
 
 	logger = zap.NewExample()
@@ -44,7 +52,7 @@ func TestProcessorOutput(t *testing.T) {
 	done := make(chan struct{})
 
 	p := NewProcessor(
-		WithOutputHandler(func(msg *message.Message) {
+		WithOutputHandler(func(msg *Message) {
 			assert.Equal(t, "dataCreated", msg.Record.EventName)
 			assert.Equal(t, "TestDataProduct", msg.Record.Table)
 
@@ -66,11 +74,8 @@ func TestProcessorOutput(t *testing.T) {
 		"payload": `{"id":101,"name":"fred"}`,
 	}
 
-	// Create a new message
-	msg := message.New()
-	msg.Rule = CreateTestRule()
-
-	// Preparing raw data
+	// Preparing message with raw data
+	msg := CreateTestMessage()
 	raw, _ := json.Marshal(testData)
 	msg.Raw = raw
 
@@ -87,7 +92,7 @@ func TestProcessorOutputsWithMultipleInputs(t *testing.T) {
 	count := int64(0)
 
 	p := NewProcessor(
-		WithOutputHandler(func(msg *message.Message) {
+		WithOutputHandler(func(msg *Message) {
 			assert.Equal(t, "dataCreated", msg.Record.EventName)
 			assert.Equal(t, "TestDataProduct", msg.Record.Table)
 
@@ -121,11 +126,8 @@ func TestProcessorOutputsWithMultipleInputs(t *testing.T) {
 			"payload": string(payload),
 		}
 
-		// Create a new message
-		msg := message.New()
-		msg.Rule = CreateTestRule()
-
-		// Preparing raw data
+		// Preparing message with raw data
+		msg := CreateTestMessage()
 		raw, _ := json.Marshal(testData)
 		msg.Raw = raw
 

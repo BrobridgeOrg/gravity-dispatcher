@@ -7,8 +7,9 @@ import (
 
 type Rule struct {
 	product_sdk.Rule
-	Handler *Handler
-	Schema  *schemer.Schema
+	Handler      *Handler
+	Schema       *schemer.Schema
+	TargetSchema *schemer.Schema
 }
 
 func NewRule(rule *product_sdk.Rule) *Rule {
@@ -36,7 +37,7 @@ func (r *Rule) applyConfigs() error {
 		}
 	}
 
-	r.Handler = NewHandler(r.HandlerConfig, r.Schema)
+	r.Handler = NewHandler(r.HandlerConfig, r.Schema, r.TargetSchema)
 
 	return nil
 }

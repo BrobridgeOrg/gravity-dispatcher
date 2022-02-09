@@ -201,6 +201,7 @@ func (p *Product) ApplyRules(rules []*product_sdk.Rule) error {
 
 	for _, r := range rules {
 		rule := rule_manager.NewRule(r)
+		rule.TargetSchema = p.Schema
 		rm.AddRule(rule)
 	}
 

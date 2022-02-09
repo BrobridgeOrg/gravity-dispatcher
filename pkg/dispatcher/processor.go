@@ -119,7 +119,6 @@ func (p *Processor) convert(msg *Message) (*gravity_sdk_types_record.Record, err
 	record.PrimaryKey = string(msg.Data.PrimaryKey)
 
 	// Transforming
-	msg.Rule.Handler.Transformer.SetDestinationSchema(msg.Product.Schema)
 	results, err := msg.Rule.Handler.Run(nil, msg.Data.Payload)
 	if err != nil {
 		return nil, err
