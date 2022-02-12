@@ -1,7 +1,6 @@
 package dispatcher
 
 import (
-	"encoding/json"
 	"errors"
 	"sync"
 

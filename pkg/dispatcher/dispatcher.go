@@ -1,15 +1,17 @@
 package dispatcher
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/BrobridgeOrg/gravity-dispatcher/pkg/configs"
 	"github.com/BrobridgeOrg/gravity-dispatcher/pkg/connector"
 	"github.com/BrobridgeOrg/gravity-sdk/config_store"
 	product_sdk "github.com/BrobridgeOrg/gravity-sdk/product"
+	jsoniter "github.com/json-iterator/go"
 	"go.uber.org/zap"
 )
+
+var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 var logger *zap.Logger
 

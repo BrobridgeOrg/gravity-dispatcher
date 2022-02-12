@@ -1,7 +1,6 @@
 package dispatcher
 
 import (
-	"encoding/json"
 	"sync"
 	"testing"
 
@@ -111,8 +110,9 @@ func TestProcessorOutputsWithMultipleInputs(t *testing.T) {
 		}),
 	)
 
-	wg.Add(100)
-	for i := 1; i <= 100; i++ {
+	num := 1000
+	wg.Add(num)
+	for i := 1; i <= num; i++ {
 
 		rawPayload := map[string]interface{}{
 			"id":   i,
@@ -134,5 +134,5 @@ func TestProcessorOutputsWithMultipleInputs(t *testing.T) {
 		p.Push(msg)
 	}
 
-	wg.Done()
+	wg.Wait()
 }
