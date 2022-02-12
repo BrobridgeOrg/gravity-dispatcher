@@ -119,8 +119,7 @@ func (d *Dispatcher) dispatch(msg *Message) {
 	)
 
 	// Preparing JetStream
-	nc := d.connector.GetClient().GetConnection()
-	js, err := nc.JetStream()
+	js, err := d.connector.GetClient().GetJetStream()
 	if err != nil {
 		logger.Error(err.Error())
 		return
