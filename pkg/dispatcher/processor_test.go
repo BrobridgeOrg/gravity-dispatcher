@@ -12,7 +12,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var testRuleMaanager = rule_manager.NewRuleManager()
+var testRuleManager = rule_manager.NewRuleManager()
 
 func CreateTestRule() *rule_manager.Rule {
 
@@ -32,7 +32,7 @@ func CreateTestRule() *rule_manager.Rule {
 	json.Unmarshal([]byte(schemaRaw), &schemaConfig)
 
 	r.SchemaConfig = schemaConfig
-	testRuleMaanager.AddRule(r)
+	testRuleManager.AddRule(r)
 
 	return r
 }

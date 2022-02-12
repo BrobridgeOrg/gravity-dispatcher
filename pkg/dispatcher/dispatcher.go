@@ -18,7 +18,6 @@ type Dispatcher struct {
 	connector          *connector.Connector
 	productConfigStore *config_store.ConfigStore
 	productManager     *ProductManager
-	watcher            *EventWatcher
 	processor          *Processor
 }
 
@@ -31,7 +30,6 @@ func New(config *configs.Config, l *zap.Logger, c *connector.Connector) *Dispatc
 		connector: c,
 	}
 
-	d.productManager = NewProductManager(d)
 	d.processor = NewProcessor(
 		WithOutputHandler(func(msg *Message) {
 			d.dispatch(msg)
@@ -42,6 +40,8 @@ func New(config *configs.Config, l *zap.Logger, c *connector.Connector) *Dispatc
 		config_store.WithCatalog("PRODUCT"),
 		config_store.WithEventHandler(d.productSettingsUpdated),
 	)
+	d.productManager = NewProductManager(d)
+	d.productManager.Subscribe(d.handleProductEvents)
 
 	err := d.initialize()
 	if err != nil {
@@ -102,6 +102,11 @@ func (d *Dispatcher) registerEvents() {
 	}
 }
 */
+
+func (d *Dispatcher) handleProductEvents(product *Product, eventName string, m *Message) {
+	d.processor.Push(m)
+}
+
 func (d *Dispatcher) dispatch(msg *Message) {
 
 	subject := fmt.Sprintf("GRAVITY.%s.DP.%s.%d.EVENT.%s",

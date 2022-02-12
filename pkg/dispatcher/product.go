@@ -22,6 +22,7 @@ type ProductSetting struct {
 type ProductManager struct {
 	dispatcher *Dispatcher
 	products   sync.Map
+	handler    func(*Product, string, *Message)
 }
 
 func NewProductManager(d *Dispatcher) *ProductManager {
@@ -38,6 +39,10 @@ func (pm *ProductManager) CreateProduct(name string) *Product {
 	// Generate ID
 	id, _ := uuid.NewUUID()
 	p.ID = id.String()
+
+	p.Subscribe(func(eventName string, message *Message) {
+		pm.handler(p, eventName, message)
+	})
 
 	p.init()
 
@@ -84,12 +89,17 @@ func (pm *ProductManager) ApplySettings(name string, setting *product_sdk.Produc
 	if !ok {
 		// New dataProduct
 		p := pm.CreateProduct(name)
+
 		return p.ApplySettings(setting)
 	}
 
 	// Apply new settings
 	p := v.(*Product)
 	return p.ApplySettings(setting)
+}
+
+func (pm *ProductManager) Subscribe(fn func(*Product, string, *Message)) {
+	pm.handler = fn
 }
 
 type Product struct {
@@ -101,6 +111,7 @@ type Product struct {
 
 	manager *ProductManager
 	watcher *EventWatcher
+	handler func(string, *Message)
 }
 
 func NewProduct(pm *ProductManager) *Product {
@@ -131,6 +142,10 @@ func (p *Product) init() error {
 
 func (p *Product) handleMessage(eventName string, msg *nats.Msg) {
 
+	if p.handler == nil {
+		return
+	}
+
 	// Get rules by event
 	rules := p.Rules.GetRulesByEvent(eventName)
 	if len(rules) == 0 {
@@ -150,7 +165,34 @@ func (p *Product) handleMessage(eventName string, msg *nats.Msg) {
 	m.Product = p
 	m.Raw = msg.Data
 
-	p.manager.dispatcher.processor.Push(m)
+	p.handler(eventName, m)
+}
+
+func (p *Product) HandleRawMessage(eventName string, raw []byte) {
+
+	if p.handler == nil {
+		return
+	}
+
+	// Get rules by event
+	rules := p.Rules.GetRulesByEvent(eventName)
+	if len(rules) == 0 {
+		logger.Warn("Ignore event",
+			zap.String("event", eventName),
+		)
+		return
+	}
+
+	m := NewMessage()
+	m.Rule = rules[0]
+	m.Product = p
+	m.Raw = raw
+
+	p.handler(eventName, m)
+}
+
+func (p *Product) Subscribe(fn func(string, *Message)) {
+	p.handler = fn
 }
 
 func (p *Product) ApplySettings(setting *product_sdk.ProductSetting) error {
@@ -207,6 +249,10 @@ func (p *Product) ApplyRules(rules []*product_sdk.Rule) error {
 
 	p.Rules = rm
 
+	if p.watcher == nil {
+		return nil
+	}
+
 	// Purge events
 	p.watcher.PurgeEvent()
 
@@ -220,9 +266,19 @@ func (p *Product) ApplyRules(rules []*product_sdk.Rule) error {
 }
 
 func (p *Product) StartEventWatcher() error {
+
+	if p.watcher == nil {
+		return nil
+	}
+
 	return p.watcher.Watch(p.handleMessage)
 }
 
 func (p *Product) StopEventWatcher() error {
+
+	if p.watcher == nil {
+		return nil
+	}
+
 	return p.watcher.Stop()
 }

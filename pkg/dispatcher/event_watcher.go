@@ -9,6 +9,28 @@ import (
 	"github.com/nats-io/nats.go"
 )
 
+type WatcherManager struct {
+	watchers map[string]*EventWatcher
+}
+
+func NewWatcherManager() *WatcherManager {
+	return &WatcherManager{
+		watchers: make(map[string]*EventWatcher),
+	}
+}
+
+func (wm *WatcherManager) Get(name string) *EventWatcher {
+	if v, ok := wm.watchers[name]; ok {
+		return v
+	}
+
+	return nil
+}
+
+func (wm *WatcherManager) Delete(name string) {
+	delete(wm.watchers, name)
+}
+
 type Event struct {
 	Name string
 }
