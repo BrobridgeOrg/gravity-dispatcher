@@ -52,7 +52,7 @@ func (m *Message) ParseRawData() error {
 	}
 
 	// Parsing payload
-	err = json.Unmarshal([]byte(m.Data.RawPayload), &m.Data.Payload)
+	err = json.Unmarshal(StrToBytes(m.Data.RawPayload), &m.Data.Payload)
 	if err != nil {
 		return err
 	}

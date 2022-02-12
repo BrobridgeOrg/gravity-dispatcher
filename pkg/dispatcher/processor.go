@@ -94,15 +94,15 @@ func (p *Processor) calculatePrimaryKey(msg *Message) {
 	record := msg.Rule.Schema.Scan(msg.Data.Payload)
 
 	// Collect values from fields to calculate primary key
-	primaryKeys := make([]string, 0)
-	for _, pk := range msg.Rule.PrimaryKey {
+	primaryKeys := make([]string, len(msg.Rule.PrimaryKey))
+	for i, pk := range msg.Rule.PrimaryKey {
 		v := record.GetValue(pk)
-		primaryKeys = append(primaryKeys, fmt.Sprintf("%v", v.Data))
+		primaryKeys[i] = fmt.Sprintf("%v", v.Data)
 	}
 
 	// Merge all values
 	pk := strings.Join(primaryKeys, "-")
-	msg.Data.PrimaryKey = []byte(pk)
+	msg.Data.PrimaryKey = StrToBytes(pk)
 }
 
 func (p *Processor) calculatePartition(msg *Message) {
