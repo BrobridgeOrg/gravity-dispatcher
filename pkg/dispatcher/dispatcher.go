@@ -1,6 +1,7 @@
 package dispatcher
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/BrobridgeOrg/gravity-dispatcher/pkg/configs"
@@ -8,6 +9,7 @@ import (
 	"github.com/BrobridgeOrg/gravity-sdk/config_store"
 	product_sdk "github.com/BrobridgeOrg/gravity-sdk/product"
 	jsoniter "github.com/json-iterator/go"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
@@ -23,7 +25,7 @@ type Dispatcher struct {
 	processor          *Processor
 }
 
-func New(config *configs.Config, l *zap.Logger, c *connector.Connector) *Dispatcher {
+func New(lifecycle fx.Lifecycle, config *configs.Config, l *zap.Logger, c *connector.Connector) *Dispatcher {
 
 	logger = l
 
@@ -45,11 +47,16 @@ func New(config *configs.Config, l *zap.Logger, c *connector.Connector) *Dispatc
 	d.productManager = NewProductManager(d)
 	d.productManager.Subscribe(d.handleProductEvents)
 
-	err := d.initialize()
-	if err != nil {
-		logger.Error(err.Error())
-		return nil
-	}
+	lifecycle.Append(
+		fx.Hook{
+			OnStart: func(context.Context) error {
+				return d.initialize()
+			},
+			OnStop: func(ctx context.Context) error {
+				return nil
+			},
+		},
+	)
 
 	return d
 }

@@ -1,13 +1,17 @@
 package connector
 
 import (
+	"context"
 	"fmt"
 	"time"
 
 	"github.com/BrobridgeOrg/gravity-sdk/core"
 	"github.com/spf13/viper"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var logger *zap.Logger
 
 const (
 	DefaultHost                = "0.0.0.0"
@@ -25,24 +29,40 @@ type Connector struct {
 	domain string
 }
 
-func New(logger *zap.Logger) *Connector {
+func New(lifecycle fx.Lifecycle, l *zap.Logger) *Connector {
+
+	logger = l.Named("Connector")
 
 	c := &Connector{
 		client: core.NewClient(),
-		logger: logger,
 	}
 
-	c.initialize()
+	//c.initialize()
+
+	lifecycle.Append(
+		fx.Hook{
+			OnStart: func(context.Context) error {
+				return c.initialize()
+			},
+			OnStop: func(ctx context.Context) error {
+				c.client.Disconnect()
+				return nil
+			},
+		},
+	)
 
 	return c
 }
 
-func (c *Connector) initialize() {
+func (c *Connector) initialize() error {
 
 	err := c.connect()
 	if err != nil {
-		c.logger.Error(err.Error())
+		//c.logger.Error(err.Error())
+		return err
 	}
+
+	return nil
 }
 
 func (c *Connector) connect() error {
@@ -75,7 +95,7 @@ func (c *Connector) connect() error {
 
 	address := fmt.Sprintf("%s:%d", host, port)
 
-	c.logger.Info("Connecting to Gravity Network...",
+	logger.Info("Connecting to Gravity Network...",
 		zap.String("domain", domain),
 		zap.String("address", address),
 		zap.Duration("pingInterval", options.PingInterval),
