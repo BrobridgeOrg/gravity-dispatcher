@@ -34,19 +34,6 @@ func New(lifecycle fx.Lifecycle, config *configs.Config, l *zap.Logger, c *conne
 		connector: c,
 	}
 
-	d.processor = NewProcessor(
-		WithOutputHandler(func(msg *Message) {
-			d.dispatch(msg)
-		}),
-	)
-	d.productConfigStore = config_store.NewConfigStore(c.GetClient(),
-		config_store.WithDomain(c.GetDomain()),
-		config_store.WithCatalog("PRODUCT"),
-		config_store.WithEventHandler(d.productSettingsUpdated),
-	)
-	d.productManager = NewProductManager(d)
-	d.productManager.Subscribe(d.handleProductEvents)
-
 	lifecycle.Append(
 		fx.Hook{
 			OnStart: func(context.Context) error {
@@ -92,6 +79,21 @@ func (d *Dispatcher) productSettingsUpdated(op config_store.ConfigOp, productNam
 }
 
 func (d *Dispatcher) initialize() error {
+
+	d.processor = NewProcessor(
+		WithOutputHandler(func(msg *Message) {
+			d.dispatch(msg)
+		}),
+	)
+	d.productConfigStore = config_store.NewConfigStore(d.connector.GetClient(),
+		config_store.WithDomain(d.connector.GetDomain()),
+		config_store.WithCatalog("PRODUCT"),
+		config_store.WithEventHandler(d.productSettingsUpdated),
+	)
+	d.productManager = NewProductManager(d)
+	d.productManager.Subscribe(d.handleProductEvents)
+
+	logger.Info("Initializing config store...")
 
 	err := d.productConfigStore.Init()
 	if err != nil {
