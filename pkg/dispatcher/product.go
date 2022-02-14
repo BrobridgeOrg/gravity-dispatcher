@@ -216,6 +216,8 @@ func (p *Product) ApplySettings(setting *product_sdk.ProductSetting) error {
 		}
 	}
 
+	//TODO: do nothing if only snapshot settings was changed
+
 	// Apply new rules
 	rules := make([]*product_sdk.Rule, 0)
 	for _, rule := range setting.Rules {
