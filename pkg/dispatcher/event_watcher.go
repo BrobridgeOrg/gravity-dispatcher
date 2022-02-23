@@ -67,6 +67,10 @@ func (ew *EventWatcher) RegisterEvent(name string) *Event {
 
 	subject := fmt.Sprintf("GRAVITY-%s.EVENT.%s", ew.domain, name)
 
+	logger.Info("Registered event",
+		zap.String("subject", subject),
+	)
+
 	ew.events[subject] = e
 
 	return e

@@ -249,6 +249,7 @@ func (p *Product) ApplyRules(rules []*product_sdk.Rule) error {
 		rm.AddRule(rule)
 	}
 
+	// Replace old rule manager
 	p.Rules = rm
 
 	if p.watcher == nil {
