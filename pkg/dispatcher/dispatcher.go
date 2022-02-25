@@ -9,6 +9,7 @@ import (
 	"github.com/BrobridgeOrg/gravity-sdk/config_store"
 	product_sdk "github.com/BrobridgeOrg/gravity-sdk/product"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/nats-io/nats.go"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -27,7 +28,7 @@ type Dispatcher struct {
 
 func New(lifecycle fx.Lifecycle, config *configs.Config, l *zap.Logger, c *connector.Connector) *Dispatcher {
 
-	logger = l
+	logger = l.Named("Dispatcher")
 
 	d := &Dispatcher{
 		config:    config,
@@ -120,7 +121,7 @@ func (d *Dispatcher) handleProductEvents(product *Product, eventName string, m *
 
 func (d *Dispatcher) dispatch(msg *Message) {
 
-	subject := fmt.Sprintf("GRAVITY.%s.DP.%s.%d.EVENT.%s",
+	subject := fmt.Sprintf("$GVT.%s.DP.%s.%d.EVENT.%s",
 		d.connector.GetDomain(),
 		msg.Record.Table,
 		msg.Partition,
@@ -136,8 +137,15 @@ func (d *Dispatcher) dispatch(msg *Message) {
 
 	go func() {
 
+		m := &nats.Msg{
+			Subject: subject,
+			Data:    msg.RawRecord,
+		}
+
+		m.Header = msg.Msg.Header
+
 		// Publish to product stream
-		future, err := js.PublishAsync(subject, msg.RawRecord)
+		future, err := js.PublishMsgAsync(m)
 		if err != nil {
 			logger.Error(err.Error())
 			return

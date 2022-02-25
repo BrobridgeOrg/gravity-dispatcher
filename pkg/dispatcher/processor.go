@@ -9,6 +9,7 @@ import (
 	gravity_sdk_types_record "github.com/BrobridgeOrg/gravity-sdk/types/record"
 	sdf "github.com/BrobridgeOrg/sequential-data-flow"
 	"github.com/lithammer/go-jump-consistent-hash"
+	"go.uber.org/zap"
 )
 
 var recordPool = sync.Pool{
@@ -65,7 +66,9 @@ func (p *Processor) handle(msg *Message, output func(interface{})) {
 	// Parsing raw data
 	err := msg.ParseRawData()
 	if err != nil {
-		logger.Error(err.Error())
+		logger.Error("Failed to parse message",
+			zap.Error(err),
+		)
 		return
 	}
 

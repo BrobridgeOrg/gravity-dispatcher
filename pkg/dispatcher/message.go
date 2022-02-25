@@ -24,7 +24,7 @@ type Message struct {
 
 type MessageRawData struct {
 	Event      string `json:"event"`
-	RawPayload string `json:"payload"`
+	RawPayload []byte `json:"payload"`
 	PrimaryKey []byte
 	Payload    map[string]interface{}
 }
@@ -52,7 +52,7 @@ func (m *Message) ParseRawData() error {
 	}
 
 	// Parsing payload
-	err = json.Unmarshal(StrToBytes(m.Data.RawPayload), &m.Data.Payload)
+	err = json.Unmarshal(m.Data.RawPayload, &m.Data.Payload)
 	if err != nil {
 		return err
 	}

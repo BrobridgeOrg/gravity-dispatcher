@@ -12,6 +12,12 @@ import (
 	"go.uber.org/zap"
 )
 
+const (
+	productEventStream  = "GVT_%s_DP_%s"
+	productEventSubject = "$GVT.%s.DP.%s.*.EVENT.>"
+	domainEventConsumer = "GVT_%s_DP_%s"
+)
+
 type ProductSetting struct {
 	Name        string                `json:"name"`
 	Description string                `json:"desc"`
@@ -31,7 +37,68 @@ func NewProductManager(d *Dispatcher) *ProductManager {
 	}
 }
 
+func (pm *ProductManager) assertProductStream(name string) error {
+
+	// Preparing JetStream
+	js, err := pm.dispatcher.connector.GetClient().GetJetStream()
+	if err != nil {
+		return err
+	}
+
+	streamName := fmt.Sprintf(productEventStream, pm.dispatcher.connector.GetDomain(), name)
+
+	logger.Info("Checking product stream",
+		zap.String("product", name),
+		zap.String("stream", streamName),
+	)
+
+	// Check if the stream already exists
+	stream, err := js.StreamInfo(streamName)
+	if err != nil {
+		logger.Warn(err.Error())
+	}
+
+	// Event subject
+	subject := fmt.Sprintf(productEventSubject, pm.dispatcher.connector.GetDomain(), name)
+
+	if stream == nil {
+
+		// Initializing stream
+		logger.Info("Creating a new product stream...",
+			zap.String("product", name),
+			zap.String("stream", streamName),
+			zap.String("subject", subject),
+		)
+
+		_, err := js.AddStream(&nats.StreamConfig{
+			Name:        streamName,
+			Description: "Gravity product event",
+			Subjects: []string{
+				subject,
+			},
+			Retention: nats.LimitsPolicy,
+		})
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+
+}
+
 func (pm *ProductManager) CreateProduct(name string) *Product {
+
+	// Assert product stream
+	err := pm.assertProductStream(name)
+	if err != nil {
+		logger.Error("Failed to create product stream",
+			zap.Error(err),
+		)
+
+		return nil
+	}
 
 	p := NewProduct(pm)
 	p.Name = name
@@ -129,7 +196,7 @@ func (p *Product) init() error {
 	p.watcher = NewEventWatcher(
 		connector.GetClient(),
 		connector.GetDomain(),
-		fmt.Sprintf("GRAVITY_%s_DP_%s", connector.GetDomain(), p.Name),
+		fmt.Sprintf(domainEventConsumer, connector.GetDomain(), p.Name),
 	)
 
 	err := p.watcher.Init()

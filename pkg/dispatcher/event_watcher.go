@@ -9,6 +9,11 @@ import (
 	"github.com/nats-io/nats.go"
 )
 
+const (
+	domainStream       = "GVT_%s"
+	domainEventSubject = "$GVT.%s.EVENT.%s"
+)
+
 type WatcherManager struct {
 	watchers map[string]*EventWatcher
 }
@@ -65,7 +70,7 @@ func (ew *EventWatcher) RegisterEvent(name string) *Event {
 	e := NewEvent()
 	e.Name = name
 
-	subject := fmt.Sprintf("GRAVITY-%s.EVENT.%s", ew.domain, name)
+	subject := fmt.Sprintf(domainEventSubject, ew.domain, name)
 
 	logger.Info("Registered event",
 		zap.String("subject", subject),
@@ -100,15 +105,17 @@ func (ew *EventWatcher) GetEvent(name string) *Event {
 
 func (ew *EventWatcher) Init() error {
 
-	logger.Info("Initializing EventWatcher...")
-
 	// Preparing JetStream
 	js, err := ew.client.GetJetStream()
 	if err != nil {
 		return err
 	}
 
-	streamName := fmt.Sprintf("GRAVITY-%s", ew.domain)
+	streamName := fmt.Sprintf(domainStream, ew.domain)
+
+	logger.Info("Initializing EventWatcher...",
+		zap.String("stream", streamName),
+	)
 
 	// Check if the stream already exists
 	stream, err := js.StreamInfo(streamName)
@@ -116,7 +123,7 @@ func (ew *EventWatcher) Init() error {
 		logger.Warn(err.Error())
 	}
 
-	subject := fmt.Sprintf("%s.EVENT.*", streamName)
+	subject := fmt.Sprintf(domainEventSubject, ew.domain, "*")
 
 	if stream == nil {
 
@@ -167,9 +174,8 @@ func (ew *EventWatcher) Watch(fn func(string, *nats.Msg)) error {
 		return err
 	}
 
-	streamName := fmt.Sprintf("GRAVITY-%s", ew.domain)
+	subject := fmt.Sprintf(domainEventSubject, ew.domain, "*")
 
-	subject := fmt.Sprintf("%s.EVENT.*", streamName)
 	logger.Info("Waiting events...",
 		zap.String("subject", subject),
 	)
