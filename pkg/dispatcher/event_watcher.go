@@ -135,7 +135,7 @@ func (ew *EventWatcher) Init() error {
 
 		_, err := js.AddStream(&nats.StreamConfig{
 			Name:        streamName,
-			Description: "Gravity event store",
+			Description: "Gravity domain event store",
 			Subjects: []string{
 				subject,
 			},

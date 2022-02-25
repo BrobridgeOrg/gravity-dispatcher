@@ -72,7 +72,7 @@ func (pm *ProductManager) assertProductStream(name string) error {
 
 		_, err := js.AddStream(&nats.StreamConfig{
 			Name:        streamName,
-			Description: "Gravity product event",
+			Description: "Gravity product event store",
 			Subjects: []string{
 				subject,
 			},
