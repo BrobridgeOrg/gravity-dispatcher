@@ -120,15 +120,32 @@ func (pm *ProductManager) CreateProduct(name string, streamName string) *Product
 	return p
 }
 
-func (pm *ProductManager) DeleteProduct(name string) {
+func (pm *ProductManager) DeleteProduct(name string) error {
 
 	v, ok := pm.products.LoadAndDelete(name)
 	if !ok {
-		return
+		return nil
 	}
 
 	p := v.(*Product)
 	p.StopEventWatcher()
+
+	js, err := pm.dispatcher.connector.GetClient().GetJetStream()
+	if err != nil {
+		return err
+	}
+
+	streamName := fmt.Sprintf(productEventStream, pm.dispatcher.connector.GetDomain(), name)
+	err = js.DeleteStream(streamName)
+	if err != nil {
+		logger.Warn("Failed to delete product stream",
+			zap.Error(err),
+		)
+
+		return nil
+	}
+
+	return nil
 }
 
 func (pm *ProductManager) GetProduct(name string) *Product {
