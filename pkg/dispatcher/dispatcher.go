@@ -55,16 +55,25 @@ func (d *Dispatcher) productSettingsUpdated(op config_store.ConfigOp, productNam
 		zap.String("name", productName),
 	)
 
-	var setting product_sdk.ProductSetting
-	err := json.Unmarshal(data, &setting)
-	if err != nil {
-		logger.Error(err.Error())
+	// Delete product
+	if op == config_store.ConfigDelete {
+		logger.Info("Delete product",
+			zap.String("product", productName),
+		)
+		d.productManager.DeleteProduct(productName)
 		return
 	}
 
-	// Delete product
-	if op == config_store.ConfigDelete {
-		d.productManager.DeleteProduct(productName)
+	// Parsing setting
+	var setting product_sdk.ProductSetting
+	err := json.Unmarshal(data, &setting)
+	if err != nil {
+		logger.Error("Failed to sync:",
+			zap.Error(err),
+			zap.String("op", op.String()),
+			zap.String("raw", string(data)),
+		)
+
 		return
 	}
 

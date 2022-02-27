@@ -37,7 +37,7 @@ func NewProductManager(d *Dispatcher) *ProductManager {
 	}
 }
 
-func (pm *ProductManager) assertProductStream(name string) error {
+func (pm *ProductManager) assertProductStream(name string, streamName string) error {
 
 	// Preparing JetStream
 	js, err := pm.dispatcher.connector.GetClient().GetJetStream()
@@ -45,7 +45,9 @@ func (pm *ProductManager) assertProductStream(name string) error {
 		return err
 	}
 
-	streamName := fmt.Sprintf(productEventStream, pm.dispatcher.connector.GetDomain(), name)
+	if len(streamName) == 0 {
+		streamName = fmt.Sprintf(productEventStream, pm.dispatcher.connector.GetDomain(), name)
+	}
 
 	logger.Info("Checking product stream",
 		zap.String("product", name),
@@ -88,10 +90,10 @@ func (pm *ProductManager) assertProductStream(name string) error {
 
 }
 
-func (pm *ProductManager) CreateProduct(name string) *Product {
+func (pm *ProductManager) CreateProduct(name string, streamName string) *Product {
 
 	// Assert product stream
-	err := pm.assertProductStream(name)
+	err := pm.assertProductStream(name, streamName)
 	if err != nil {
 		logger.Error("Failed to create product stream",
 			zap.Error(err),
@@ -154,11 +156,20 @@ func (pm *ProductManager) ApplySettings(name string, setting *product_sdk.Produc
 
 	v, ok := pm.products.Load(name)
 	if !ok {
+
+		logger.Info("Create product",
+			zap.String("product", name),
+		)
+
 		// New dataProduct
-		p := pm.CreateProduct(name)
+		p := pm.CreateProduct(name, setting.Stream)
 
 		return p.ApplySettings(setting)
 	}
+
+	logger.Info("Update product",
+		zap.String("product", name),
+	)
 
 	// Apply new settings
 	p := v.(*Product)
