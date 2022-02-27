@@ -194,6 +194,8 @@ func (ew *EventWatcher) Watch(fn func(string, *nats.Msg)) error {
 		return err
 	}
 
+	sub.SetPendingLimits(-1, -1)
+
 	ew.sub = sub
 
 	return nil
