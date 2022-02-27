@@ -15,9 +15,9 @@ func TestProductMessageHandler(t *testing.T) {
 	logger = zap.NewExample()
 	var wg sync.WaitGroup
 
-	testData := map[string]interface{}{
-		"event":   "dataCreated",
-		"payload": `{"id":101,"name":"fred"}`,
+	testData := MessageRawData{
+		Event:      "dataCreated",
+		RawPayload: []byte(`{"id":101,"name":"fred"}`),
 	}
 
 	// Preparing processor
@@ -91,7 +91,7 @@ func TestProductMessageHandler(t *testing.T) {
 	// Message
 	wg.Add(1)
 	raw, _ := json.Marshal(testData)
-	product.HandleRawMessage(testData["event"].(string), raw)
+	product.HandleRawMessage(testData.Event, raw)
 
 	wg.Wait()
 }
@@ -101,9 +101,9 @@ func TestProductTransformerSrcipt(t *testing.T) {
 	logger = zap.NewExample()
 	var wg sync.WaitGroup
 
-	testData := map[string]interface{}{
-		"event":   "dataCreated",
-		"payload": `{"id":101,"name":"fred"}`,
+	testData := MessageRawData{
+		Event:      "dataCreated",
+		RawPayload: []byte(`{"id":101,"name":"fred"}`),
 	}
 
 	// Preparing processor
@@ -186,7 +186,7 @@ func TestProductTransformerSrcipt(t *testing.T) {
 	// Message
 	wg.Add(1)
 	raw, _ := json.Marshal(testData)
-	product.HandleRawMessage(testData["event"].(string), raw)
+	product.HandleRawMessage(testData.Event, raw)
 
 	wg.Wait()
 }

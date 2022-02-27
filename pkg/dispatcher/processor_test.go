@@ -68,9 +68,9 @@ func TestProcessorOutput(t *testing.T) {
 		}),
 	)
 
-	testData := map[string]interface{}{
-		"event":   "dataCreated",
-		"payload": `{"id":101,"name":"fred"}`,
+	testData := MessageRawData{
+		Event:      "dataCreated",
+		RawPayload: []byte(`{"id":101,"name":"fred"}`),
 	}
 
 	// Preparing message with raw data
@@ -121,9 +121,9 @@ func TestProcessorOutputsWithMultipleInputs(t *testing.T) {
 
 		payload, _ := json.Marshal(rawPayload)
 
-		testData := map[string]interface{}{
-			"event":   "dataCreated",
-			"payload": string(payload),
+		testData := MessageRawData{
+			Event:      "dataCreated",
+			RawPayload: payload,
 		}
 
 		// Preparing message with raw data
