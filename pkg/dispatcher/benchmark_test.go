@@ -17,9 +17,9 @@ func BenchmarkProcessor(b *testing.B) {
 
 	payload, _ := json.Marshal(rawPayload)
 
-	testData := map[string]interface{}{
-		"event":   "Benchmark",
-		"payload": string(payload),
+	testData := MessageRawData{
+		Event:      "Benchmark",
+		RawPayload: payload,
 	}
 
 	// Preparing message with raw data
@@ -32,5 +32,6 @@ func BenchmarkProcessor(b *testing.B) {
 	b.ResetTimer()
 	for i := 1; i <= b.N; i++ {
 		p.handle(msg, func(interface{}) {})
+		msg.Reset()
 	}
 }

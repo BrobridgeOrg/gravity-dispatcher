@@ -7,6 +7,7 @@ require (
 	github.com/BrobridgeOrg/gravity-sdk v0.0.50
 	github.com/BrobridgeOrg/schemer v0.0.10
 	github.com/BrobridgeOrg/sequential-data-flow v0.0.1
+	github.com/cfsghost/buffered-input v0.0.1
 	github.com/cfsghost/gosharding v0.0.3
 	github.com/cfsghost/taskflow v0.0.2
 	github.com/d5/tengo v1.24.8

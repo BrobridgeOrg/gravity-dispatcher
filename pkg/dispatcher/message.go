@@ -11,7 +11,10 @@ import (
 )
 
 type Message struct {
+	ID           string
 	Msg          *nats.Msg
+	Future       nats.PubAckFuture
+	Event        string
 	Product      *Product
 	Rule         *rule_manager.Rule
 	Data         MessageRawData
@@ -20,13 +23,14 @@ type Message struct {
 	Record       *gravity_sdk_types_record.Record
 	RawRecord    []byte
 	TargetSchema *schemer.Schema
+	OutputMsg    *nats.Msg
 }
 
 type MessageRawData struct {
 	Event      string `json:"event"`
 	RawPayload []byte `json:"payload"`
-	PrimaryKey []byte
-	Payload    map[string]interface{}
+	//	PrimaryKey []byte
+	Payload map[string]interface{}
 }
 
 var MessagePool = sync.Pool{
@@ -61,5 +65,11 @@ func (m *Message) ParseRawData() error {
 }
 
 func (m *Message) Release() {
+	m.Reset()
 	MessagePool.Put(m)
+}
+
+func (m *Message) Reset() {
+	recordPool.Put(m.Record)
+	natsMsgPool.Put(m.OutputMsg)
 }

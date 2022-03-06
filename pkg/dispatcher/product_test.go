@@ -10,6 +10,54 @@ import (
 	"go.uber.org/zap"
 )
 
+func CreateTestProductSetting() *product_sdk.ProductSetting {
+
+	// Product schema
+	productSchemaSource := `{
+	"id": { "type": "int" },
+	"name": { "type": "string" },
+	"type": { "type": "string" },
+	"phone": { "type": "string" },
+	"address": { "type": "string" }
+}`
+
+	var productSchema map[string]interface{}
+	json.Unmarshal([]byte(productSchemaSource), &productSchema)
+
+	// Preparing product setting
+	setting := &product_sdk.ProductSetting{
+		Name:        "TestProduct",
+		Description: "Product description",
+		Enabled:     false,
+		Schema:      productSchema,
+	}
+
+	return setting
+}
+
+func CreateTestProductRule() *product_sdk.Rule {
+
+	r := product_sdk.NewRule()
+	r.Name = "test_rule"
+	r.Event = "dataCreated"
+	r.Product = "TestDataProduct"
+	r.PrimaryKey = []string{
+		"id",
+	}
+
+	schemaRaw := `{
+	"id": { "type": "int" },
+	"name": { "type": "string" }
+}`
+
+	var schemaConfig map[string]interface{}
+	json.Unmarshal([]byte(schemaRaw), &schemaConfig)
+
+	r.SchemaConfig = schemaConfig
+
+	return r
+}
+
 func TestProductMessageHandler(t *testing.T) {
 
 	logger = zap.NewExample()
@@ -29,9 +77,9 @@ func TestProductMessageHandler(t *testing.T) {
 			for _, field := range msg.Record.Fields {
 				switch field.Name {
 				case "id":
-					assert.Equal(t, int64(101), gravity_sdk_types_record.GetValue(field.Value))
+					assert.Equal(t, int64(101), gravity_sdk_types_record.GetValueData(field.Value))
 				case "name":
-					assert.Equal(t, "fred", gravity_sdk_types_record.GetValue(field.Value))
+					assert.Equal(t, "fred", gravity_sdk_types_record.GetValueData(field.Value))
 				}
 			}
 
@@ -39,43 +87,11 @@ func TestProductMessageHandler(t *testing.T) {
 		}),
 	)
 
-	// Product schema
-	productSchemaSource := `
-	"id": { "type": "uint" },
-	"name": { "type": "string" },
-	"type": { "type": "string" },
-	"phone": { "type": "string" },
-	"address": { "type": "string" }
-`
-
-	var productSchema map[string]interface{}
-	json.Unmarshal([]byte(productSchemaSource), &productSchema)
-
-	// Preparing product setting
-	setting := &product_sdk.ProductSetting{
-		Name:        "TestProduct",
-		Description: "Product description",
-		Enabled:     false,
-		Schema:      productSchema,
-	}
+	// Preparing product
+	setting := CreateTestProductSetting()
 
 	// Preapring rule
-	r := product_sdk.NewRule()
-	r.Event = "dataCreated"
-	r.Product = "TestDataProduct"
-	r.PrimaryKey = []string{
-		"id",
-	}
-
-	schemaRaw := `{
-	"id": { "type": "int" },
-	"name": { "type": "string" }
-}`
-
-	var schemaConfig map[string]interface{}
-	json.Unmarshal([]byte(schemaRaw), &schemaConfig)
-
-	r.SchemaConfig = schemaConfig
+	r := CreateTestProductRule()
 
 	setting.Rules = map[string]*product_sdk.Rule{
 		"testRule": r,
@@ -115,9 +131,9 @@ func TestProductTransformerSrcipt(t *testing.T) {
 			for _, field := range msg.Record.Fields {
 				switch field.Name {
 				case "id":
-					assert.Equal(t, int64(101), gravity_sdk_types_record.GetValue(field.Value))
+					assert.Equal(t, int64(101), gravity_sdk_types_record.GetValueData(field.Value))
 				case "name":
-					assert.Equal(t, "fredX", gravity_sdk_types_record.GetValue(field.Value))
+					assert.Equal(t, "fredX", gravity_sdk_types_record.GetValueData(field.Value))
 				}
 			}
 
@@ -125,43 +141,11 @@ func TestProductTransformerSrcipt(t *testing.T) {
 		}),
 	)
 
-	// Product schema
-	productSchemaSource := `
-	"id": { "type": "uint" },
-	"name": { "type": "string" },
-	"type": { "type": "string" },
-	"phone": { "type": "string" },
-	"address": { "type": "string" }
-`
-
-	var productSchema map[string]interface{}
-	json.Unmarshal([]byte(productSchemaSource), &productSchema)
-
-	// Preparing product setting
-	setting := &product_sdk.ProductSetting{
-		Name:        "TestProduct",
-		Description: "Product description",
-		Enabled:     false,
-		Schema:      productSchema,
-	}
+	// Preparing product
+	setting := CreateTestProductSetting()
 
 	// Preapring rule
-	r := product_sdk.NewRule()
-	r.Event = "dataCreated"
-	r.Product = "TestDataProduct"
-	r.PrimaryKey = []string{
-		"id",
-	}
-
-	schemaRaw := `{
-	"id": { "type": "int" },
-	"name": { "type": "string" }
-}`
-
-	var schemaConfig map[string]interface{}
-	json.Unmarshal([]byte(schemaRaw), &schemaConfig)
-
-	r.SchemaConfig = schemaConfig
+	r := CreateTestProductRule()
 	r.HandlerConfig = &product_sdk.HandlerConfig{
 		Type: "script",
 		Script: `

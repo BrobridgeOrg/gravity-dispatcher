@@ -33,9 +33,7 @@ func New(lifecycle fx.Lifecycle, l *zap.Logger) *Connector {
 
 	logger = l.Named("Connector")
 
-	c := &Connector{
-		client: core.NewClient(),
-	}
+	c := &Connector{}
 
 	//c.initialize()
 
@@ -56,17 +54,6 @@ func New(lifecycle fx.Lifecycle, l *zap.Logger) *Connector {
 
 func (c *Connector) initialize() error {
 
-	err := c.connect()
-	if err != nil {
-		//c.logger.Error(err.Error())
-		return err
-	}
-
-	return nil
-}
-
-func (c *Connector) connect() error {
-
 	// default domain and access key
 	viper.SetDefault("gravity.domain", DefaultDomain)
 	viper.SetDefault("gravity.accessKey", DefaultAccessKey)
@@ -77,6 +64,24 @@ func (c *Connector) connect() error {
 	viper.SetDefault("gravity.pingInterval", DefaultPingInterval)
 	viper.SetDefault("gravity.maxPingsOutstanding", DefaultMaxPingsOutstanding)
 	viper.SetDefault("gravity.maxReconnects", DefaultMaxReconnects)
+
+	// Get domain
+	domain := viper.GetString("gravity.domain")
+	c.domain = domain
+
+	// Initializing client
+	client, err := c.CreateClient()
+	if err != nil {
+		//c.logger.Error(err.Error())
+		return err
+	}
+
+	c.client = client
+
+	return nil
+}
+
+func (c *Connector) CreateClient() (*core.Client, error) {
 
 	// Read configs
 	domain := viper.GetString("gravity.domain")
@@ -103,14 +108,13 @@ func (c *Connector) connect() error {
 		zap.Int("maxReconnects", options.MaxReconnects),
 	)
 
-	c.domain = domain
+	client := core.NewClient()
+	err := client.Connect(address, options)
+	if err != nil {
+		return nil, err
+	}
 
-	// Initializing keyring
-	//keyInfo := synchronizer.keyring.Put("gravity", accessKey)
-	//keyInfo.Permission().AddPermissions([]string{"SYSTEM"})
-
-	// Connect
-	return c.client.Connect(address, options)
+	return client, nil
 }
 
 func (c *Connector) GetClient() *core.Client {

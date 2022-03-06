@@ -120,7 +120,16 @@ func (ew *EventWatcher) Init() error {
 	// Check if the stream already exists
 	stream, err := js.StreamInfo(streamName)
 	if err != nil {
-		logger.Warn(err.Error())
+		if err != nats.ErrStreamNotFound {
+			logger.Error("Failed to get stream information",
+				zap.Error(err),
+			)
+			return err
+		}
+
+		logger.Warn("stream not found",
+			zap.String("stream", streamName),
+		)
 	}
 
 	subject := fmt.Sprintf(domainEventSubject, ew.domain, "*")
@@ -139,7 +148,7 @@ func (ew *EventWatcher) Init() error {
 			Subjects: []string{
 				subject,
 			},
-			Retention: nats.InterestPolicy,
+			//			Retention: nats.InterestPolicy,
 		})
 
 		if err != nil {
@@ -180,21 +189,33 @@ func (ew *EventWatcher) Watch(fn func(string, *nats.Msg)) error {
 		zap.String("subject", subject),
 	)
 	//sub, err := js.PullSubscribe(subject, "DISPATCH", nats.PullMaxWaiting(128), nats.AckExplicit())
-	sub, err := js.Subscribe(subject, func(msg *nats.Msg) {
 
+	//	count := 0
+	sub, err := js.Subscribe(subject, func(msg *nats.Msg) {
+		/*
+			count++
+			logger.Info("msg",
+				zap.Int("count", count),
+			)
+		*/
 		// Ignore event
-		if e, ok := ew.events[msg.Subject]; ok {
-			fn(e.Name, msg)
+		e, ok := ew.events[msg.Subject]
+		if !ok {
+			msg.Ack()
 			return
 		}
 
-		msg.Ack()
-	}, nats.DeliverNew(), nats.AckAll(), nats.Durable(ew.durable))
+		fn(e.Name, msg)
+
+		//}, nats.DeliverNew(), nats.AckAll(), nats.Durable(ew.durable), nats.OrderedConsumer())
+		//}, nats.OrderedConsumer())
+	}, nats.MaxAckPending(20480), nats.AckAll(), nats.Durable(ew.durable))
 	if err != nil {
 		return err
 	}
 
 	sub.SetPendingLimits(-1, -1)
+	ew.client.GetConnection().Flush()
 
 	ew.sub = sub
 

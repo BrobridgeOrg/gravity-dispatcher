@@ -11,8 +11,6 @@ import (
 	"go.uber.org/zap"
 )
 
-var testRuleManager = rule_manager.NewRuleManager()
-
 func CreateTestRule() *rule_manager.Rule {
 
 	r := rule_manager.NewRule(product_sdk.NewRule())
@@ -31,15 +29,19 @@ func CreateTestRule() *rule_manager.Rule {
 	json.Unmarshal([]byte(schemaRaw), &schemaConfig)
 
 	r.SchemaConfig = schemaConfig
-	testRuleManager.AddRule(r)
 
 	return r
 }
 
 func CreateTestMessage() *Message {
 
+	// Prparing rule
+	testRuleManager := rule_manager.NewRuleManager()
+	r := CreateTestRule()
+	testRuleManager.AddRule(r)
+
 	msg := NewMessage()
-	msg.Rule = CreateTestRule()
+	msg.Rule = r
 
 	return msg
 }
@@ -58,9 +60,9 @@ func TestProcessorOutput(t *testing.T) {
 			for _, field := range msg.Record.Fields {
 				switch field.Name {
 				case "id":
-					assert.Equal(t, int64(101), gravity_sdk_types_record.GetValue(field.Value))
+					assert.Equal(t, int64(101), gravity_sdk_types_record.GetValueData(field.Value))
 				case "name":
-					assert.Equal(t, "fred", gravity_sdk_types_record.GetValue(field.Value))
+					assert.Equal(t, "fred", gravity_sdk_types_record.GetValueData(field.Value))
 				}
 			}
 
@@ -100,9 +102,9 @@ func TestProcessorOutputsWithMultipleInputs(t *testing.T) {
 			for _, field := range msg.Record.Fields {
 				switch field.Name {
 				case "id":
-					assert.Equal(t, count, gravity_sdk_types_record.GetValue(field.Value))
+					assert.Equal(t, count, gravity_sdk_types_record.GetValueData(field.Value))
 				case "name":
-					assert.Equal(t, "test", gravity_sdk_types_record.GetValue(field.Value))
+					assert.Equal(t, "test", gravity_sdk_types_record.GetValueData(field.Value))
 				}
 			}
 

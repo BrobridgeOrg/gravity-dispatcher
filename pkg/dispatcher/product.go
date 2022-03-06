@@ -241,22 +241,14 @@ func (p *Product) handleMessage(eventName string, msg *nats.Msg) {
 		return
 	}
 
-	// Get rules by event
-	rules := p.Rules.GetRulesByEvent(eventName)
-	if len(rules) == 0 {
-		logger.Warn("Ignore event",
-			zap.String("event", eventName),
-		)
-		return
-	}
-
 	// Getting message sequence
 	//meta, _ := msg.Metadata()
 	//fmt.Println(meta.Sequence.Consumer)
 
 	m := NewMessage()
+	m.Event = eventName
 	m.Msg = msg
-	m.Rule = rules[0]
+	m.Rule = nil
 	m.Product = p
 	m.Raw = msg.Data
 
@@ -269,17 +261,10 @@ func (p *Product) HandleRawMessage(eventName string, raw []byte) {
 		return
 	}
 
-	// Get rules by event
-	rules := p.Rules.GetRulesByEvent(eventName)
-	if len(rules) == 0 {
-		logger.Warn("Ignore event",
-			zap.String("event", eventName),
-		)
-		return
-	}
-
 	m := NewMessage()
-	m.Rule = rules[0]
+	m.Event = eventName
+	m.Msg = nil
+	m.Rule = nil
 	m.Product = p
 	m.Raw = raw
 
@@ -291,6 +276,8 @@ func (p *Product) Subscribe(fn func(string, *Message)) {
 }
 
 func (p *Product) ApplySettings(setting *product_sdk.ProductSetting) error {
+
+	p.Name = setting.Name
 
 	// Disable
 	if p.Enabled && p.Enabled != setting.Enabled {
