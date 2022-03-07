@@ -74,6 +74,10 @@ func (p *Processor) Push(msg *Message) {
 	p.flow.Push(msg)
 }
 
+func (p *Processor) Close() {
+	p.flow.Close()
+}
+
 func (p *Processor) handle(msg *Message, output func(interface{})) {
 
 	if msg.Rule == nil {

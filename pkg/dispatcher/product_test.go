@@ -99,10 +99,10 @@ func TestProductMessageHandler(t *testing.T) {
 
 	// Create product and apply setting
 	product := NewProduct(nil)
-	product.ApplySettings(setting)
-	product.Subscribe(func(eventName string, msg *Message) {
+	product.onMessage = func(msg *Message) {
 		p.Push(msg)
-	})
+	}
+	product.ApplySettings(setting)
 
 	// Message
 	wg.Add(1)
@@ -162,10 +162,10 @@ func TestProductTransformerSrcipt(t *testing.T) {
 
 	// Create product and apply setting
 	product := NewProduct(nil)
-	product.ApplySettings(setting)
-	product.Subscribe(func(eventName string, msg *Message) {
+	product.onMessage = func(msg *Message) {
 		p.Push(msg)
-	})
+	}
+	product.ApplySettings(setting)
 
 	// Message
 	wg.Add(1)

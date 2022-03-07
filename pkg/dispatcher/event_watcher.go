@@ -113,7 +113,7 @@ func (ew *EventWatcher) Init() error {
 
 	streamName := fmt.Sprintf(domainStream, ew.domain)
 
-	logger.Info("Initializing EventWatcher...",
+	logger.Info("Initializing event stream",
 		zap.String("stream", streamName),
 	)
 
@@ -175,7 +175,7 @@ func (ew *EventWatcher) Watch(fn func(string, *nats.Msg)) error {
 		return nil
 	}
 
-	logger.Info("Starting watch for events...")
+	logger.Info("Start watching for events...")
 
 	// Preparing JetStream
 	js, err := ew.client.GetJetStream()

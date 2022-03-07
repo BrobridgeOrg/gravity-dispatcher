@@ -3,10 +3,13 @@ package dispatcher
 import (
 	"fmt"
 	"sync"
+	"time"
 
+	"github.com/BrobridgeOrg/gravity-dispatcher/pkg/connector"
 	"github.com/BrobridgeOrg/gravity-dispatcher/pkg/dispatcher/rule_manager"
 	product_sdk "github.com/BrobridgeOrg/gravity-sdk/product"
 	"github.com/BrobridgeOrg/schemer"
+	buffered_input "github.com/cfsghost/buffered-input"
 	"github.com/google/uuid"
 	"github.com/nats-io/nats.go"
 	"go.uber.org/zap"
@@ -28,7 +31,6 @@ type ProductSetting struct {
 type ProductManager struct {
 	dispatcher *Dispatcher
 	products   sync.Map
-	handler    func(*Product, string, *Message)
 }
 
 func NewProductManager(d *Dispatcher) *ProductManager {
@@ -103,15 +105,12 @@ func (pm *ProductManager) CreateProduct(name string, streamName string) *Product
 	}
 
 	p := NewProduct(pm)
+	p.Domain = pm.dispatcher.connector.GetDomain()
 	p.Name = name
 
 	// Generate ID
 	id, _ := uuid.NewUUID()
 	p.ID = id.String()
-
-	p.Subscribe(func(eventName string, message *Message) {
-		pm.handler(p, eventName, message)
-	})
 
 	p.init()
 
@@ -193,37 +192,63 @@ func (pm *ProductManager) ApplySettings(name string, setting *product_sdk.Produc
 	return p.ApplySettings(setting)
 }
 
-func (pm *ProductManager) Subscribe(fn func(*Product, string, *Message)) {
-	pm.handler = fn
-}
-
 type Product struct {
 	ID      string
+	Domain  string
 	Name    string
 	Enabled bool
 	Rules   *rule_manager.RuleManager
 	Schema  *schemer.Schema
 
-	manager *ProductManager
-	watcher *EventWatcher
-	handler func(string, *Message)
+	processor        *Processor
+	dispatcherBuffer *buffered_input.BufferedInput
+	manager          *ProductManager
+	watcher          *EventWatcher
+	onMessage        func(msg *Message)
 }
 
 func NewProduct(pm *ProductManager) *Product {
-	return &Product{
+
+	p := &Product{
 		Rules:   rule_manager.NewRuleManager(),
 		manager: pm,
 	}
+
+	p.reset()
+	p.onMessage = p.dispatch
+
+	return p
+}
+
+func (p *Product) reset() {
+
+	// Initializing buffered input
+	opts := buffered_input.NewOptions()
+	opts.ChunkSize = 1000
+	opts.ChunkCount = 1000
+	opts.Timeout = 100 * time.Millisecond
+	opts.Handler = p.dispatcherBufferHandler
+	p.dispatcherBuffer = buffered_input.NewBufferedInput(opts)
+
+	// Initializing processer
+	p.processor = NewProcessor(
+		WithDomain(p.Domain),
+		WithOutputHandler(p.emit),
+	)
+}
+
+func (p *Product) getConnector() *connector.Connector {
+	return p.manager.dispatcher.connector
 }
 
 func (p *Product) init() error {
 
-	connector := p.manager.dispatcher.connector
+	connector := p.getConnector()
 
 	// Initializing event watcher
 	p.watcher = NewEventWatcher(
 		connector.GetClient(),
-		connector.GetDomain(),
+		p.Domain,
 		fmt.Sprintf(domainEventConsumer, connector.GetDomain(), p.Name),
 	)
 
@@ -235,61 +260,104 @@ func (p *Product) init() error {
 	return nil
 }
 
-func (p *Product) handleMessage(eventName string, msg *nats.Msg) {
+func (p *Product) emit(msg *Message) {
+	p.onMessage(msg)
+}
 
-	if p.handler == nil {
-		return
+func (p *Product) dispatcherBufferHandler(chunk []interface{}) {
+
+	ackNum := 0
+	var prev *Message
+	for i, v := range chunk {
+
+		m := v.(*Message)
+
+		err := m.Dispatch()
+		if err != nil {
+
+			// Ack for the last message
+			if prev != nil {
+				prev.Ack()
+				prev.Release()
+				ackNum = i
+
+				logger.Info("Messages were dispatched",
+					zap.String("product", p.Name),
+					zap.Int("count", i),
+				)
+			}
+
+			// Retry
+			for {
+				time.Sleep(time.Second)
+
+				logger.Info("Retrying to ack",
+					zap.String("product", p.Name),
+				)
+
+				err := m.Dispatch()
+				if err == nil {
+					// Success
+					break
+				}
+			}
+		}
+
+		prev = v.(*Message)
 	}
 
-	// Getting message sequence
-	//meta, _ := msg.Metadata()
-	//fmt.Println(meta.Sequence.Consumer)
+	if ackNum < len(chunk) {
+		prev.Ack()
+		prev.Release()
 
+		logger.Info("Messages were dispatched",
+			zap.String("product", p.Name),
+			zap.Int("count", len(chunk)-ackNum),
+		)
+	}
+}
+
+func (p *Product) dispatch(msg *Message) {
+	p.dispatcherBuffer.Push(msg)
+}
+
+func (p *Product) handleMessage(eventName string, msg *nats.Msg) {
 	m := NewMessage()
+	m.Publisher = p.manager.dispatcher.publisherJSCtx
 	m.Event = eventName
 	m.Msg = msg
 	m.Rule = nil
 	m.Product = p
 	m.Raw = msg.Data
 
-	p.handler(eventName, m)
+	p.processor.Push(m)
 }
 
 func (p *Product) HandleRawMessage(eventName string, raw []byte) {
-
-	if p.handler == nil {
-		return
-	}
-
 	m := NewMessage()
+	m.Publisher = nil
 	m.Event = eventName
 	m.Msg = nil
 	m.Rule = nil
 	m.Product = p
 	m.Raw = raw
 
-	p.handler(eventName, m)
-}
-
-func (p *Product) Subscribe(fn func(string, *Message)) {
-	p.handler = fn
+	p.processor.Push(m)
 }
 
 func (p *Product) ApplySettings(setting *product_sdk.ProductSetting) error {
 
-	p.Name = setting.Name
-
-	// Disable
-	if p.Enabled && p.Enabled != setting.Enabled {
-		err := p.StopEventWatcher()
-		if err != nil {
-			return err
-		}
-
-		p.Enabled = setting.Enabled
+	err := p.Deactivate()
+	if err != nil {
+		return err
 	}
 
-	// Preparing product schema
+	p.PurgeTasks()
+
+	p.Name = setting.Name
+	p.Enabled = setting.Enabled
+
+	// Product schema
 	if setting.Schema != nil {
 		p.Schema = schemer.NewSchema()
 		err := schemer.Unmarshal(setting.Schema, p.Schema)
@@ -307,14 +375,9 @@ func (p *Product) ApplySettings(setting *product_sdk.ProductSetting) error {
 	}
 	p.ApplyRules(rules)
 
-	// Enable
-	if !p.Enabled && p.Enabled != setting.Enabled {
-		err := p.StartEventWatcher()
-		if err != nil {
-			return err
-		}
-
-		p.Enabled = setting.Enabled
+	err = p.Activate()
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -345,6 +408,59 @@ func (p *Product) ApplyRules(rules []*product_sdk.Rule) error {
 	events := p.Rules.GetEvents()
 	for _, event := range events {
 		p.watcher.RegisterEvent(event)
+	}
+
+	return nil
+}
+
+func (p *Product) PurgeTasks() error {
+
+	if p.dispatcherBuffer == nil {
+		return nil
+	}
+
+	p.dispatcherBuffer.Close()
+
+	if p.processor == nil {
+		return nil
+	}
+
+	p.processor.Close()
+
+	p.reset()
+
+	return nil
+}
+
+func (p *Product) Deactivate() error {
+
+	logger.Info("Deactivating product",
+		zap.String("product", p.Name),
+	)
+
+	// Stop receiving events
+	err := p.StopEventWatcher()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (p *Product) Activate() error {
+
+	// Product is disabled
+	if !p.Enabled {
+		return nil
+	}
+
+	logger.Info("Activating product",
+		zap.String("product", p.Name),
+	)
+
+	err := p.StartEventWatcher()
+	if err != nil {
+		return err
 	}
 
 	return nil

@@ -12,8 +12,8 @@ import (
 
 type Message struct {
 	ID           string
+	Publisher    nats.JetStreamContext
 	Msg          *nats.Msg
-	Future       nats.PubAckFuture
 	Event        string
 	Product      *Product
 	Rule         *rule_manager.Rule
@@ -72,4 +72,23 @@ func (m *Message) Release() {
 func (m *Message) Reset() {
 	recordPool.Put(m.Record)
 	natsMsgPool.Put(m.OutputMsg)
+}
+
+func (m *Message) Ack() error {
+	return m.Msg.Ack()
+}
+
+func (m *Message) Dispatch() error {
+
+	if m.Publisher == nil {
+		return nil
+	}
+
+	// Publish to product stream
+	_, err := m.Publisher.PublishMsgAsync(m.OutputMsg, nats.MsgId(m.ID))
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
