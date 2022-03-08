@@ -7,6 +7,7 @@ import (
 	"github.com/BrobridgeOrg/gravity-dispatcher/pkg/dispatcher/rule_manager"
 	gravity_sdk_types_record "github.com/BrobridgeOrg/gravity-sdk/types/record"
 	"github.com/BrobridgeOrg/schemer"
+
 	"github.com/nats-io/nats.go"
 )
 
