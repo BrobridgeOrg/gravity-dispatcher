@@ -24,6 +24,7 @@ type Message struct {
 	RawRecord    []byte
 	TargetSchema *schemer.Schema
 	OutputMsg    *nats.Msg
+	Ignore       bool
 }
 
 type MessageRawData struct {
@@ -70,8 +71,14 @@ func (m *Message) Release() {
 }
 
 func (m *Message) Reset() {
-	recordPool.Put(m.Record)
-	natsMsgPool.Put(m.OutputMsg)
+
+	if m.Record != nil {
+		recordPool.Put(m.Record)
+	}
+
+	if m.OutputMsg != nil {
+		natsMsgPool.Put(m.OutputMsg)
+	}
 }
 
 func (m *Message) Ack() error {
@@ -80,7 +87,15 @@ func (m *Message) Ack() error {
 
 func (m *Message) Dispatch() error {
 
+	if m.Ignore {
+		return nil
+	}
+
 	if m.Publisher == nil {
+		return nil
+	}
+
+	if !m.Product.Enabled {
 		return nil
 	}
 

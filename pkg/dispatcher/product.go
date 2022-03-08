@@ -193,12 +193,13 @@ func (pm *ProductManager) ApplySettings(name string, setting *product_sdk.Produc
 }
 
 type Product struct {
-	ID      string
-	Domain  string
-	Name    string
-	Enabled bool
-	Rules   *rule_manager.RuleManager
-	Schema  *schemer.Schema
+	ID        string
+	Domain    string
+	Name      string
+	Enabled   bool
+	Rules     *rule_manager.RuleManager
+	Schema    *schemer.Schema
+	IsRunning bool
 
 	processor        *Processor
 	dispatcherBuffer *buffered_input.BufferedInput
@@ -270,6 +271,10 @@ func (p *Product) dispatcherBufferHandler(chunk []interface{}) {
 	var prev *Message
 	for i, v := range chunk {
 
+		if !p.IsRunning {
+			return
+		}
+
 		m := v.(*Message)
 
 		err := m.Dispatch()
@@ -287,9 +292,17 @@ func (p *Product) dispatcherBufferHandler(chunk []interface{}) {
 				)
 			}
 
+			logger.Error("Failed to dispatch",
+				zap.Error(err),
+			)
+
 			// Retry
 			for {
 				time.Sleep(time.Second)
+
+				if !p.IsRunning {
+					return
+				}
 
 				logger.Info("Retrying to ack",
 					zap.String("product", p.Name),
@@ -329,18 +342,29 @@ func (p *Product) handleMessage(eventName string, msg *nats.Msg) {
 	m.Rule = nil
 	m.Product = p
 	m.Raw = msg.Data
+	m.Record = nil
+	m.OutputMsg = nil
+
+	if len(eventName) > 0 {
+		m.Ignore = false
+	} else {
+		m.Ignore = true
+	}
 
 	p.processor.Push(m)
 }
 
 func (p *Product) HandleRawMessage(eventName string, raw []byte) {
 	m := NewMessage()
+	m.Ignore = false
 	m.Publisher = nil
 	m.Event = eventName
 	m.Msg = nil
 	m.Rule = nil
 	m.Product = p
 	m.Raw = raw
+	m.Record = nil
+	m.OutputMsg = nil
 
 	p.processor.Push(m)
 }
@@ -438,6 +462,8 @@ func (p *Product) Deactivate() error {
 		zap.String("product", p.Name),
 	)
 
+	p.IsRunning = false
+
 	// Stop receiving events
 	err := p.StopEventWatcher()
 	if err != nil {
@@ -453,6 +479,8 @@ func (p *Product) Activate() error {
 	if !p.Enabled {
 		return nil
 	}
+
+	p.IsRunning = true
 
 	logger.Info("Activating product",
 		zap.String("product", p.Name),

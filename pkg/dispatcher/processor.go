@@ -80,9 +80,16 @@ func (p *Processor) Close() {
 
 func (p *Processor) handle(msg *Message, output func(interface{})) {
 
+	if msg.Ignore {
+		output(msg)
+		return
+	}
+
 	if msg.Rule == nil {
 		if !p.checkRule(msg) {
 			// No match found, so ignore
+			msg.Ignore = true
+			output(msg)
 			return
 		}
 	}
@@ -93,6 +100,8 @@ func (p *Processor) handle(msg *Message, output func(interface{})) {
 		logger.Error("Failed to parse message",
 			zap.Error(err),
 		)
+		msg.Ignore = true
+		output(msg)
 		return
 	}
 
@@ -103,6 +112,8 @@ func (p *Processor) handle(msg *Message, output func(interface{})) {
 	if err != nil {
 		// Failed to parse payload
 		logger.Error(err.Error())
+		msg.Ignore = true
+		output(msg)
 		return
 	}
 

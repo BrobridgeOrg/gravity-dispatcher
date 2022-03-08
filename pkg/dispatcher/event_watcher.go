@@ -201,7 +201,7 @@ func (ew *EventWatcher) Watch(fn func(string, *nats.Msg)) error {
 		// Ignore event
 		e, ok := ew.events[msg.Subject]
 		if !ok {
-			msg.Ack()
+			fn("", msg)
 			return
 		}
 
