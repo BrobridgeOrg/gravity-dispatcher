@@ -342,7 +342,7 @@ func (p *Product) handleMessage(eventName string, msg *nats.Msg) {
 	m.Rule = nil
 	m.Product = p
 	m.Raw = msg.Data
-	m.Record = nil
+	m.ProductEvent = nil
 	m.OutputMsg = nil
 
 	if len(eventName) > 0 {
@@ -363,7 +363,7 @@ func (p *Product) HandleRawMessage(eventName string, raw []byte) {
 	m.Rule = nil
 	m.Product = p
 	m.Raw = raw
-	m.Record = nil
+	m.ProductEvent = nil
 	m.OutputMsg = nil
 
 	p.processor.Push(m)

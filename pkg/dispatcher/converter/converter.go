@@ -4,30 +4,30 @@ import (
 	"fmt"
 	"reflect"
 
-	gravity_sdk_types_record "github.com/BrobridgeOrg/gravity-sdk/types/record"
+	record_type "github.com/BrobridgeOrg/compton/types/record"
 	"github.com/BrobridgeOrg/schemer"
 )
 
 var (
-	RecordTypes = map[schemer.ValueType]gravity_sdk_types_record.DataType{
-		schemer.TYPE_NULL:    gravity_sdk_types_record.DataType_NULL,
-		schemer.TYPE_INT64:   gravity_sdk_types_record.DataType_INT64,
-		schemer.TYPE_UINT64:  gravity_sdk_types_record.DataType_UINT64,
-		schemer.TYPE_FLOAT64: gravity_sdk_types_record.DataType_FLOAT64,
-		schemer.TYPE_BOOLEAN: gravity_sdk_types_record.DataType_BOOLEAN,
-		schemer.TYPE_STRING:  gravity_sdk_types_record.DataType_STRING,
-		schemer.TYPE_BINARY:  gravity_sdk_types_record.DataType_BINARY,
-		schemer.TYPE_TIME:    gravity_sdk_types_record.DataType_TIME,
-		schemer.TYPE_ARRAY:   gravity_sdk_types_record.DataType_ARRAY,
-		schemer.TYPE_MAP:     gravity_sdk_types_record.DataType_MAP,
+	RecordTypes = map[schemer.ValueType]record_type.DataType{
+		schemer.TYPE_NULL:    record_type.DataType_NULL,
+		schemer.TYPE_INT64:   record_type.DataType_INT64,
+		schemer.TYPE_UINT64:  record_type.DataType_UINT64,
+		schemer.TYPE_FLOAT64: record_type.DataType_FLOAT64,
+		schemer.TYPE_BOOLEAN: record_type.DataType_BOOLEAN,
+		schemer.TYPE_STRING:  record_type.DataType_STRING,
+		schemer.TYPE_BINARY:  record_type.DataType_BINARY,
+		schemer.TYPE_TIME:    record_type.DataType_TIME,
+		schemer.TYPE_ARRAY:   record_type.DataType_ARRAY,
+		schemer.TYPE_MAP:     record_type.DataType_MAP,
 	}
 )
 
-func getValue(t schemer.ValueType, data interface{}) (*gravity_sdk_types_record.Value, error) {
-	return gravity_sdk_types_record.CreateValue(RecordTypes[t], data)
+func getValue(t schemer.ValueType, data interface{}) (*record_type.Value, error) {
+	return record_type.CreateValue(RecordTypes[t], data)
 }
 
-func convert(def *schemer.Definition, data interface{}) (*gravity_sdk_types_record.Value, error) {
+func convert(def *schemer.Definition, data interface{}) (*record_type.Value, error) {
 
 	switch def.Type {
 	case schemer.TYPE_ARRAY:
@@ -35,8 +35,8 @@ func convert(def *schemer.Definition, data interface{}) (*gravity_sdk_types_reco
 		v := reflect.ValueOf(data)
 
 		// Prepare map value
-		av := &gravity_sdk_types_record.ArrayValue{
-			Elements: make([]*gravity_sdk_types_record.Value, 0, v.Len()),
+		av := &record_type.ArrayValue{
+			Elements: make([]*record_type.Value, 0, v.Len()),
 		}
 
 		for i := 0; i < v.Len(); i++ {
@@ -52,8 +52,8 @@ func convert(def *schemer.Definition, data interface{}) (*gravity_sdk_types_reco
 			av.Elements = append(av.Elements, v)
 		}
 
-		return &gravity_sdk_types_record.Value{
-			Type:  gravity_sdk_types_record.DataType_ARRAY,
+		return &record_type.Value{
+			Type:  record_type.DataType_ARRAY,
 			Array: av,
 		}, nil
 
@@ -71,12 +71,12 @@ func convert(def *schemer.Definition, data interface{}) (*gravity_sdk_types_reco
 		}
 
 		// Prepare map value
-		mv := &gravity_sdk_types_record.MapValue{
+		mv := &record_type.MapValue{
 			Fields: fields,
 		}
 
-		return &gravity_sdk_types_record.Value{
-			Type: gravity_sdk_types_record.DataType_MAP,
+		return &record_type.Value{
+			Type: record_type.DataType_MAP,
 			Map:  mv,
 		}, nil
 	}
@@ -84,21 +84,21 @@ func convert(def *schemer.Definition, data interface{}) (*gravity_sdk_types_reco
 	return getValue(def.Type, data)
 }
 
-func Convert(schema *schemer.Schema, data map[string]interface{}) ([]*gravity_sdk_types_record.Field, error) {
+func Convert(schema *schemer.Schema, data map[string]interface{}) ([]*record_type.Field, error) {
 
-	fields := make([]*gravity_sdk_types_record.Field, 0)
+	fields := make([]*record_type.Field, 0)
 
 	if schema == nil {
 
 		// No schema has been set so preparing record based on native types
 		for fieldName, value := range data {
-			v, err := gravity_sdk_types_record.GetValueFromInterface(value)
+			v, err := record_type.GetValueFromInterface(value)
 			if err != nil {
 				fmt.Println(err)
 				continue
 			}
 
-			field := &gravity_sdk_types_record.Field{
+			field := &record_type.Field{
 				Name:  fieldName,
 				Value: v,
 			}
@@ -123,7 +123,7 @@ func Convert(schema *schemer.Schema, data map[string]interface{}) ([]*gravity_sd
 			continue
 		}
 
-		field := &gravity_sdk_types_record.Field{
+		field := &record_type.Field{
 			Name:  fieldName,
 			Value: v,
 		}

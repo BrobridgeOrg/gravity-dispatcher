@@ -4,8 +4,8 @@ import (
 	"sync"
 	"testing"
 
+	record_type "github.com/BrobridgeOrg/compton/types/record"
 	product_sdk "github.com/BrobridgeOrg/gravity-sdk/product"
-	gravity_sdk_types_record "github.com/BrobridgeOrg/gravity-sdk/types/record"
 	"github.com/d5/tengo/assert"
 	"go.uber.org/zap"
 )
@@ -71,15 +71,18 @@ func TestProductMessageHandler(t *testing.T) {
 	// Preparing processor
 	p := NewProcessor(
 		WithOutputHandler(func(msg *Message) {
-			assert.Equal(t, "dataCreated", msg.Record.EventName)
-			assert.Equal(t, "TestDataProduct", msg.Record.Table)
+			assert.Equal(t, "dataCreated", msg.ProductEvent.EventName)
+			assert.Equal(t, "TestDataProduct", msg.ProductEvent.Table)
 
-			for _, field := range msg.Record.Fields {
+			r, err := msg.ProductEvent.GetContent()
+			assert.Equal(t, nil, err)
+
+			for _, field := range r.Payload.Map.Fields {
 				switch field.Name {
 				case "id":
-					assert.Equal(t, int64(101), gravity_sdk_types_record.GetValueData(field.Value))
+					assert.Equal(t, int64(101), record_type.GetValueData(field.Value))
 				case "name":
-					assert.Equal(t, "fred", gravity_sdk_types_record.GetValueData(field.Value))
+					assert.Equal(t, "fred", record_type.GetValueData(field.Value))
 				}
 			}
 
@@ -125,15 +128,18 @@ func TestProductTransformerSrcipt(t *testing.T) {
 	// Preparing processor
 	p := NewProcessor(
 		WithOutputHandler(func(msg *Message) {
-			assert.Equal(t, "dataCreated", msg.Record.EventName)
-			assert.Equal(t, "TestDataProduct", msg.Record.Table)
+			assert.Equal(t, "dataCreated", msg.ProductEvent.EventName)
+			assert.Equal(t, "TestDataProduct", msg.ProductEvent.Table)
 
-			for _, field := range msg.Record.Fields {
+			r, err := msg.ProductEvent.GetContent()
+			assert.Equal(t, nil, err)
+
+			for _, field := range r.Payload.Map.Fields {
 				switch field.Name {
 				case "id":
-					assert.Equal(t, int64(101), gravity_sdk_types_record.GetValueData(field.Value))
+					assert.Equal(t, int64(101), record_type.GetValueData(field.Value))
 				case "name":
-					assert.Equal(t, "fredX", gravity_sdk_types_record.GetValueData(field.Value))
+					assert.Equal(t, "fredX", record_type.GetValueData(field.Value))
 				}
 			}
 

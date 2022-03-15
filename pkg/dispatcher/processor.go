@@ -4,17 +4,18 @@ import (
 	"fmt"
 	"sync"
 
+	record_type "github.com/BrobridgeOrg/compton/types/record"
 	"github.com/BrobridgeOrg/gravity-dispatcher/pkg/dispatcher/converter"
-	gravity_sdk_types_record "github.com/BrobridgeOrg/gravity-sdk/types/record"
+	gravity_sdk_types_product_event "github.com/BrobridgeOrg/gravity-sdk/types/product_event"
 	sdf "github.com/BrobridgeOrg/sequential-data-flow"
 	"github.com/lithammer/go-jump-consistent-hash"
 	"github.com/nats-io/nats.go"
 	"go.uber.org/zap"
 )
 
-var recordPool = sync.Pool{
+var productEventPool = sync.Pool{
 	New: func() interface{} {
-		return &gravity_sdk_types_record.Record{}
+		return &gravity_sdk_types_product_event.ProductEvent{}
 	},
 }
 
@@ -107,8 +108,8 @@ func (p *Processor) handle(msg *Message, output func(interface{})) {
 
 	//	p.calculatePrimaryKey(msg)
 
-	// Mapping and convert raw data to record object
-	record, err := p.convert(msg)
+	// Mapping and convert raw data to product_event object
+	product_event, err := p.convert(msg)
 	if err != nil {
 		// Failed to parse payload
 		logger.Error(err.Error())
@@ -117,11 +118,11 @@ func (p *Processor) handle(msg *Message, output func(interface{})) {
 		return
 	}
 
-	msg.Record = record
+	msg.ProductEvent = product_event
 
-	// Convert record to bytes
-	rawRecord, _ := gravity_sdk_types_record.Marshal(record)
-	msg.RawRecord = rawRecord
+	// Convert product_event to bytes
+	rawProductEvent, _ := gravity_sdk_types_product_event.Marshal(product_event)
+	msg.RawProductEvent = rawProductEvent
 
 	// Only avaialble if NATS message object exists
 	var header nats.Header
@@ -135,20 +136,20 @@ func (p *Processor) handle(msg *Message, output func(interface{})) {
 	// Output subject
 	subject := fmt.Sprintf("$GVT.%s.DP.%s.%d.EVENT.%s",
 		p.domain,
-		msg.Record.Table,
+		msg.ProductEvent.Table,
 		msg.Partition,
-		msg.Record.EventName,
+		msg.ProductEvent.EventName,
 	)
 
 	// Prepare result object
 	msg.OutputMsg = natsMsgPool.Get().(*nats.Msg)
 	msg.OutputMsg.Subject = subject
-	msg.OutputMsg.Data = rawRecord
+	msg.OutputMsg.Data = rawProductEvent
 	msg.OutputMsg.Header = header
 	/*
 		msg.OutputMsg = &nats.Msg{
 			Subject: subject,
-			Data:    rawRecord,
+			Data:    rawProductEvent,
 			Header:  header,
 		}
 	*/
@@ -178,13 +179,13 @@ func (p *Processor) checkRule(msg *Message) bool {
 /*
 func (p *Processor) calculatePrimaryKey(msg *Message) {
 
-	// Getting normalized record from map object
-	record := msg.Rule.Schema.Scan(msg.Data.Payload)
+	// Getting normalized product_event from map object
+	product_event := msg.Rule.Schema.Scan(msg.Data.Payload)
 
 	// Collect values from fields to calculate primary key
 	primaryKeys := make([]string, len(msg.Rule.PrimaryKey))
 	for i, pk := range msg.Rule.PrimaryKey {
-		v := record.GetValue(pk)
+		v := product_event.GetValue(pk)
 		primaryKeys[i] = fmt.Sprintf("%v", v.Data)
 	}
 
@@ -194,17 +195,17 @@ func (p *Processor) calculatePrimaryKey(msg *Message) {
 }
 */
 func (p *Processor) calculatePartition(msg *Message) {
-	msg.Partition = jump.HashString(string(msg.Record.PrimaryKey), 256, jump.NewCRC64())
+	msg.Partition = jump.HashString(string(msg.ProductEvent.PrimaryKey), 256, jump.NewCRC64())
 }
 
-func (p *Processor) convert(msg *Message) (*gravity_sdk_types_record.Record, error) {
+func (p *Processor) convert(msg *Message) (*gravity_sdk_types_product_event.ProductEvent, error) {
 
-	// Prepare record
-	record := recordPool.Get().(*gravity_sdk_types_record.Record)
-	record.EventName = msg.Data.Event
-	record.Method = gravity_sdk_types_record.Method(gravity_sdk_types_record.Method_value[msg.Rule.Method])
-	record.Table = msg.Rule.Product
-	record.PrimaryKeys = msg.Rule.PrimaryKey
+	// Prepare product_event
+	pe := productEventPool.Get().(*gravity_sdk_types_product_event.ProductEvent)
+	pe.EventName = msg.Data.Event
+	pe.Method = gravity_sdk_types_product_event.Method(gravity_sdk_types_product_event.Method_value[msg.Rule.Method])
+	pe.Table = msg.Rule.Product
+	pe.PrimaryKeys = msg.Rule.PrimaryKey
 
 	// Transforming
 	results, err := msg.Rule.Handler.Run(nil, msg.Data.Payload)
@@ -217,22 +218,28 @@ func (p *Processor) convert(msg *Message) (*gravity_sdk_types_record.Record, err
 		return nil, nil
 	}
 
-	// Fill record
+	// Fill product_event
 	result := results[0]
 	fields, err := converter.Convert(msg.Rule.Handler.Transformer.GetDestinationSchema(), result)
 	if err != nil {
 		return nil, err
 	}
 
-	record.Fields = fields
+	r := record_type.NewRecord()
+	r.Payload.Map.Fields = fields
 
 	// Calcuate primary key
-	pk, err := record.GetPrimaryKeyData()
+	pk, err := r.CalculateKey(pe.PrimaryKeys)
 	if err != nil {
 		return nil, err
 	}
 
-	record.PrimaryKey = pk
+	pe.PrimaryKey = pk
 
-	return record, nil
+	// Write data back to product event
+	pe.SetContent(r)
+
+	//TODO: reuse record object
+
+	return pe, nil
 }

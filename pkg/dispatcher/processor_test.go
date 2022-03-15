@@ -4,9 +4,9 @@ import (
 	"sync"
 	"testing"
 
+	record_type "github.com/BrobridgeOrg/compton/types/record"
 	"github.com/BrobridgeOrg/gravity-dispatcher/pkg/dispatcher/rule_manager"
 	product_sdk "github.com/BrobridgeOrg/gravity-sdk/product"
-	gravity_sdk_types_record "github.com/BrobridgeOrg/gravity-sdk/types/record"
 	"github.com/d5/tengo/assert"
 	"go.uber.org/zap"
 )
@@ -54,15 +54,18 @@ func TestProcessorOutput(t *testing.T) {
 
 	p := NewProcessor(
 		WithOutputHandler(func(msg *Message) {
-			assert.Equal(t, "dataCreated", msg.Record.EventName)
-			assert.Equal(t, "TestDataProduct", msg.Record.Table)
+			assert.Equal(t, "dataCreated", msg.ProductEvent.EventName)
+			assert.Equal(t, "TestDataProduct", msg.ProductEvent.Table)
 
-			for _, field := range msg.Record.Fields {
+			r, err := msg.ProductEvent.GetContent()
+			assert.Equal(t, nil, err)
+
+			for _, field := range r.Payload.Map.Fields {
 				switch field.Name {
 				case "id":
-					assert.Equal(t, int64(101), gravity_sdk_types_record.GetValueData(field.Value))
+					assert.Equal(t, int64(101), record_type.GetValueData(field.Value))
 				case "name":
-					assert.Equal(t, "fred", gravity_sdk_types_record.GetValueData(field.Value))
+					assert.Equal(t, "fred", record_type.GetValueData(field.Value))
 				}
 			}
 
@@ -94,17 +97,20 @@ func TestProcessorOutputsWithMultipleInputs(t *testing.T) {
 
 	p := NewProcessor(
 		WithOutputHandler(func(msg *Message) {
-			assert.Equal(t, "dataCreated", msg.Record.EventName)
-			assert.Equal(t, "TestDataProduct", msg.Record.Table)
+			assert.Equal(t, "dataCreated", msg.ProductEvent.EventName)
+			assert.Equal(t, "TestDataProduct", msg.ProductEvent.Table)
 
 			count++
 
-			for _, field := range msg.Record.Fields {
+			r, err := msg.ProductEvent.GetContent()
+			assert.Equal(t, nil, err)
+
+			for _, field := range r.Payload.Map.Fields {
 				switch field.Name {
 				case "id":
-					assert.Equal(t, count, gravity_sdk_types_record.GetValueData(field.Value))
+					assert.Equal(t, count, record_type.GetValueData(field.Value))
 				case "name":
-					assert.Equal(t, "test", gravity_sdk_types_record.GetValueData(field.Value))
+					assert.Equal(t, "test", record_type.GetValueData(field.Value))
 				}
 			}
 

@@ -54,6 +54,8 @@ dmitri.shuralyov.com/gpu/mtl v0.0.0-20201218220906-28db891af037/go.mod h1:H6x//7
 github.com/AndreasBriese/bbloom v0.0.0-20190306092124-e2d15f34fcf9/go.mod h1:bOvUY6CB00SOBii9/FifXqc0awNKxLFCL/+pkDPuyl8=
 github.com/BrobridgeOrg/EventStore v0.0.22/go.mod h1:u1kW3ekTu72smc0krWJ5LkC8qva5JX/8HIgrl7wfORQ=
 github.com/BrobridgeOrg/broton v0.0.7/go.mod h1:rwy8MFovBA+vVmfrMmepHvHMK9DhvwmtjZMzEfU1F/o=
+github.com/BrobridgeOrg/compton v0.0.0-20220315055918-5c0ee958b7d2 h1:vf03ZcH+qh4Lsw0zl0HC9a3eLR0hSRYCPPMzdt2K/8E=
+github.com/BrobridgeOrg/compton v0.0.0-20220315055918-5c0ee958b7d2/go.mod h1:BIpXs8Ch8yH9ruVK/QI36Vin1wWkut7J81K9dk92S20=
 github.com/BrobridgeOrg/gravity-api v0.2.25/go.mod h1:BO4mhqFUk99/sObzTFAxkIn3NMB0nBoQ29kETU9JDB4=
 github.com/BrobridgeOrg/gravity-dispatcher v0.0.0-20220206181110-2ea65aa048be/go.mod h1:FcqEXThgifT/XebUWM8GfCui4OvA0Ca0w4h4UvPaeVI=
 github.com/BrobridgeOrg/gravity-snapshot v0.0.0-20220213082459-fd38b9058d95/go.mod h1:nxssa5hbZYu0/kPVm+w9AymHVGJcFZyZNOKXiRp+br4=
@@ -152,6 +154,7 @@ github.com/cockroachdb/errors v1.8.6/go.mod h1:hOm5fabihW+xEyY1kuypGwqT+Vt7rafg0
 github.com/cockroachdb/logtags v0.0.0-20190617123548-eb05cc24525f/go.mod h1:i/u985jwjWRlyHXQbwatDASoW0RMlZ/3i9yJHE2xLkI=
 github.com/cockroachdb/pebble v0.0.0-20210605001512-cbda11b8689f/go.mod h1:1XpB4cLQcF189RAcWi4gUc110zJgtOfT7SVNGY8sOe0=
 github.com/cockroachdb/pebble v0.0.0-20210831135706-8731fd6ed157/go.mod h1:JXfQr3d+XO4bL1pxGwKKo09xylQSdZ/mpZ9b2wfVcPs=
+github.com/cockroachdb/pebble v0.0.0-20220311172724-56c5aebe1519/go.mod h1:buxOO9GBtOcq1DiXDpIPYrmxY020K2A8lOrwno5FetU=
 github.com/cockroachdb/redact v1.0.8/go.mod h1:BVNblN9mBWFyMyqK1k3AAiSxhvhfK2oOZZ2lK+dpvRg=
 github.com/cockroachdb/redact v1.1.1/go.mod h1:BVNblN9mBWFyMyqK1k3AAiSxhvhfK2oOZZ2lK+dpvRg=
 github.com/cockroachdb/redact v1.1.3/go.mod h1:BVNblN9mBWFyMyqK1k3AAiSxhvhfK2oOZZ2lK+dpvRg=
@@ -1027,6 +1030,7 @@ golang.org/x/sys v0.0.0-20210823070655-63515b42dcdf/go.mod h1:oPkhp1MJrh7nUepCBc
 golang.org/x/sys v0.0.0-20210831042530-f4d43177bf5e/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/sys v0.0.0-20210903071746-97244b99971b/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/sys v0.0.0-20210908233432-aa78b53d3365/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
+golang.org/x/sys v0.0.0-20210909193231-528a39cd75f3/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/sys v0.0.0-20210927094055-39ccf1dd6fa6/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/sys v0.0.0-20211007075335-d3039528d8ac/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/sys v0.0.0-20211124211545-fe61309f8881/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=

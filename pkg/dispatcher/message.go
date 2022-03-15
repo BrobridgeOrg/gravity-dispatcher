@@ -5,27 +5,27 @@ import (
 	"sync"
 
 	"github.com/BrobridgeOrg/gravity-dispatcher/pkg/dispatcher/rule_manager"
-	gravity_sdk_types_record "github.com/BrobridgeOrg/gravity-sdk/types/record"
+	gravity_sdk_types_product_event "github.com/BrobridgeOrg/gravity-sdk/types/product_event"
 	"github.com/BrobridgeOrg/schemer"
 
 	"github.com/nats-io/nats.go"
 )
 
 type Message struct {
-	ID           string
-	Publisher    nats.JetStreamContext
-	Msg          *nats.Msg
-	Event        string
-	Product      *Product
-	Rule         *rule_manager.Rule
-	Data         MessageRawData
-	Raw          []byte
-	Partition    int32
-	Record       *gravity_sdk_types_record.Record
-	RawRecord    []byte
-	TargetSchema *schemer.Schema
-	OutputMsg    *nats.Msg
-	Ignore       bool
+	ID              string
+	Publisher       nats.JetStreamContext
+	Msg             *nats.Msg
+	Event           string
+	Product         *Product
+	Rule            *rule_manager.Rule
+	Data            MessageRawData
+	Raw             []byte
+	Partition       int32
+	ProductEvent    *gravity_sdk_types_product_event.ProductEvent
+	RawProductEvent []byte
+	TargetSchema    *schemer.Schema
+	OutputMsg       *nats.Msg
+	Ignore          bool
 }
 
 type MessageRawData struct {
@@ -73,8 +73,8 @@ func (m *Message) Release() {
 
 func (m *Message) Reset() {
 
-	if m.Record != nil {
-		recordPool.Put(m.Record)
+	if m.ProductEvent != nil {
+		productEventPool.Put(m.ProductEvent)
 	}
 
 	if m.OutputMsg != nil {
