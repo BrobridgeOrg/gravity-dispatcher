@@ -45,6 +45,7 @@ func main() {
 
 func run() error {
 
+	config.SetConfigs(map[string]interface{}{})
 	config.AddEvents(events)
 
 	fx.New(

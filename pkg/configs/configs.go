@@ -62,3 +62,12 @@ func (config *Config) AddEvents(events []string) {
 		}
 	}
 }
+
+func (config *Config) SetConfigs(configs map[string]interface{}) {
+
+	for k, v := range configs {
+		if !viper.IsSet(k) {
+			viper.Set(k, v)
+		}
+	}
+}
