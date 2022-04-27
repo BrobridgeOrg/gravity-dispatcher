@@ -7,6 +7,7 @@ import (
 	"github.com/BrobridgeOrg/gravity-dispatcher/pkg/connector"
 	"github.com/BrobridgeOrg/gravity-dispatcher/pkg/dispatcher"
 	"github.com/BrobridgeOrg/gravity-dispatcher/pkg/logger"
+	"github.com/BrobridgeOrg/gravity-dispatcher/pkg/system"
 	"github.com/spf13/cobra"
 
 	"go.uber.org/fx"
@@ -17,8 +18,8 @@ var events []string
 
 var rootCmd = &cobra.Command{
 	Use:   "gravity-dispatcher",
-	Short: "Gravity Component to dispatch events",
-	Long: `gravity-dispatcheris a component to dispatch incoming events.
+	Short: "Gravity component to dispatch events",
+	Long: `gravity-dispatcher is a component to dispatch incoming events.
 This application can be used to recieve and dispatch events from adapter or external clients`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 
@@ -53,6 +54,7 @@ func run() error {
 		fx.Provide(
 			logger.GetLogger,
 			connector.New,
+			system.New,
 		),
 		fx.Invoke(dispatcher.New),
 		fx.NopLogger,

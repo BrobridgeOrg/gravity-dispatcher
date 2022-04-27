@@ -5,6 +5,7 @@ go 1.15
 require (
 	github.com/BrobridgeOrg/compton v0.0.0-20220315055918-5c0ee958b7d2
 	github.com/BrobridgeOrg/gravity-sdk v0.0.50
+	github.com/BrobridgeOrg/gravity-snapshot v0.0.0-20220213082459-fd38b9058d95
 	github.com/BrobridgeOrg/schemer v0.0.10
 	github.com/BrobridgeOrg/sequential-data-flow v0.0.1
 	github.com/bytedance/sonic v1.1.1

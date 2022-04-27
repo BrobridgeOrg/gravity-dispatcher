@@ -5,6 +5,7 @@ import (
 
 	"github.com/BrobridgeOrg/gravity-dispatcher/pkg/configs"
 	"github.com/BrobridgeOrg/gravity-dispatcher/pkg/connector"
+	"github.com/BrobridgeOrg/gravity-dispatcher/pkg/system"
 	"github.com/BrobridgeOrg/gravity-sdk/config_store"
 	"github.com/BrobridgeOrg/gravity-sdk/core"
 	product_sdk "github.com/BrobridgeOrg/gravity-sdk/product"
@@ -27,7 +28,7 @@ type Dispatcher struct {
 	productManager     *ProductManager
 }
 
-func New(lifecycle fx.Lifecycle, config *configs.Config, l *zap.Logger, c *connector.Connector) *Dispatcher {
+func New(lifecycle fx.Lifecycle, config *configs.Config, l *zap.Logger, c *connector.Connector, s *system.System) *Dispatcher {
 
 	logger = l.Named("Dispatcher")
 
