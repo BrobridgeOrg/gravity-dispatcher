@@ -19,6 +19,7 @@ type System struct {
 	connector *connector.Connector
 
 	productRPC *ProductRPC
+	tokenRPC   *TokenRPC
 }
 
 func New(lifecycle fx.Lifecycle, config *configs.Config, l *zap.Logger, c *connector.Connector) *System {
@@ -46,10 +47,16 @@ func New(lifecycle fx.Lifecycle, config *configs.Config, l *zap.Logger, c *conne
 
 func (system *System) initialize() error {
 
-	logger.Info("Initializing core...")
+	logger.Info("Initializing system...")
 
 	system.productRPC = NewProductRPC(system.connector)
 	err := system.productRPC.initialize()
+	if err != nil {
+		return err
+	}
+
+	system.tokenRPC = NewTokenRPC(system.connector)
+	err = system.tokenRPC.initialize()
 	if err != nil {
 		return err
 	}

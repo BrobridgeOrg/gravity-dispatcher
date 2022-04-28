@@ -7,66 +7,65 @@ import (
 	"github.com/BrobridgeOrg/gravity-dispatcher/pkg/connector"
 	internal "github.com/BrobridgeOrg/gravity-dispatcher/pkg/system/internal"
 	"github.com/BrobridgeOrg/gravity-sdk/core"
-	"github.com/BrobridgeOrg/gravity-sdk/product"
+	"github.com/BrobridgeOrg/gravity-sdk/token"
 	"github.com/nats-io/nats.go"
 	"go.uber.org/zap"
 )
 
-type ProductRPC struct {
+type TokenRPC struct {
 	RPC
 
-	connector      *connector.Connector
-	productManager *internal.ProductManager
+	connector    *connector.Connector
+	tokenManager *internal.TokenManager
 }
 
-func NewProductRPC(connector *connector.Connector) *ProductRPC {
+func NewTokenRPC(connector *connector.Connector) *TokenRPC {
 
 	rpc := NewRPC(connector)
 
-	prpc := &ProductRPC{
+	trpc := &TokenRPC{
 		RPC:       rpc,
 		connector: connector,
 	}
 
-	return prpc
+	return trpc
 }
 
-func (prpc *ProductRPC) initialize() error {
+func (trpc *TokenRPC) initialize() error {
 
-	// Initialize product manager
-	productManager := internal.NewProductManager(
-		prpc.connector.GetClient(),
-		prpc.connector.GetDomain(),
+	// Initialize token manager
+	tokenManager := internal.NewTokenManager(
+		trpc.connector.GetClient(),
+		trpc.connector.GetDomain(),
 	)
 
-	if productManager == nil {
-		return errors.New("Failed to create product client")
+	if tokenManager == nil {
+		return errors.New("Failed to create token client")
 	}
 
-	prpc.productManager = productManager
+	trpc.tokenManager = tokenManager
 
 	// Initialize RPC handlers
-	prefix := fmt.Sprintf(product.ProductAPI, prpc.connector.GetDomain())
+	prefix := fmt.Sprintf(token.TokenAPI, trpc.connector.GetDomain())
 
-	logger.Info("Initializing Product RPC",
+	logger.Info("Initializing Token RPC",
 		zap.String("prefix", prefix),
 	)
 
-	route, _ := prpc.createRoute("admin", prefix)
-	route.Handle("LIST", prpc.list)
-	route.Handle("CREATE", prpc.create)
-	route.Handle("UPDATE", prpc.update)
-	route.Handle("DELETE", prpc.delete)
-	route.Handle("INFO", prpc.info)
-	route.Handle("PURGE", prpc.purge)
+	route, _ := trpc.createRoute("admin", prefix)
+	route.Handle("LIST", trpc.list)
+	route.Handle("CREATE", trpc.create)
+	route.Handle("UPDATE", trpc.update)
+	route.Handle("DELETE", trpc.delete)
+	route.Handle("INFO", trpc.info)
 
 	return nil
 }
 
-func (prpc *ProductRPC) list(msg *nats.Msg) {
+func (trpc *TokenRPC) list(msg *nats.Msg) {
 
 	// Prepare response message
-	resp := &product.ListProductsReply{}
+	resp := &token.ListTokensReply{}
 	defer func() {
 		data, _ := json.Marshal(resp)
 
@@ -79,7 +78,7 @@ func (prpc *ProductRPC) list(msg *nats.Msg) {
 	}()
 
 	// Parsing request
-	var req product.ListProductsRequest
+	var req token.ListTokensRequest
 	err := json.Unmarshal(msg.Data, &req)
 	if err != nil {
 		logger.Error(err.Error())
@@ -87,21 +86,21 @@ func (prpc *ProductRPC) list(msg *nats.Msg) {
 		return
 	}
 
-	// List products
-	settings, err := prpc.productManager.ListProducts()
+	// List tokens
+	settings, err := trpc.tokenManager.ListTokens()
 	if err != nil {
 		logger.Error(err.Error())
 		resp.Error = InternalServerErr()
 		return
 	}
 
-	resp.Products = settings
+	resp.Tokens = settings
 }
 
-func (prpc *ProductRPC) create(msg *nats.Msg) {
+func (trpc *TokenRPC) create(msg *nats.Msg) {
 
 	// Prepare response message
-	resp := &product.CreateProductReply{}
+	resp := &token.CreateTokenReply{}
 	defer func() {
 		data, _ := json.Marshal(resp)
 
@@ -114,7 +113,7 @@ func (prpc *ProductRPC) create(msg *nats.Msg) {
 	}()
 
 	// Parsing request
-	var req product.CreateProductRequest
+	var req token.CreateTokenRequest
 	err := json.Unmarshal(msg.Data, &req)
 	if err != nil {
 		logger.Error(err.Error())
@@ -122,12 +121,14 @@ func (prpc *ProductRPC) create(msg *nats.Msg) {
 		return
 	}
 
-	// Create a new product
-	setting, err := prpc.productManager.CreateProduct(req.Setting)
+	req.Setting.ID = req.TokenID
+
+	// Create a new token
+	setting, err := trpc.tokenManager.CreateToken(req.TokenID, req.Setting)
 	if err != nil {
 		logger.Error(err.Error())
 
-		if err == internal.ErrProductExistsAlready {
+		if err == internal.ErrTokenExistsAlready {
 			resp.Error = &core.Error{
 				Code:    44400,
 				Message: err.Error(),
@@ -142,10 +143,10 @@ func (prpc *ProductRPC) create(msg *nats.Msg) {
 	resp.Setting = setting
 }
 
-func (prpc *ProductRPC) update(msg *nats.Msg) {
+func (trpc *TokenRPC) update(msg *nats.Msg) {
 
 	// Prepare response message
-	resp := &product.UpdateProductReply{}
+	resp := &token.UpdateTokenReply{}
 	defer func() {
 		data, _ := json.Marshal(resp)
 
@@ -158,7 +159,7 @@ func (prpc *ProductRPC) update(msg *nats.Msg) {
 	}()
 
 	// Parsing request
-	var req product.UpdateProductRequest
+	var req token.UpdateTokenRequest
 	err := json.Unmarshal(msg.Data, &req)
 	if err != nil {
 		logger.Error(err.Error())
@@ -166,12 +167,12 @@ func (prpc *ProductRPC) update(msg *nats.Msg) {
 		return
 	}
 
-	// Update specific product
-	setting, err := prpc.productManager.UpdateProduct(req.Name, req.Setting)
+	// Update specific token
+	setting, err := trpc.tokenManager.UpdateToken(req.TokenID, req.Setting)
 	if err != nil {
 		logger.Error(err.Error())
 
-		if err == internal.ErrProductNotFound {
+		if err == internal.ErrTokenNotFound {
 			resp.Error = &core.Error{
 				Code:    44404,
 				Message: err.Error(),
@@ -186,10 +187,10 @@ func (prpc *ProductRPC) update(msg *nats.Msg) {
 	resp.Setting = setting
 }
 
-func (prpc *ProductRPC) delete(msg *nats.Msg) {
+func (trpc *TokenRPC) delete(msg *nats.Msg) {
 
 	// Prepare response message
-	resp := &product.DeleteProductReply{}
+	resp := &token.DeleteTokenReply{}
 	defer func() {
 		data, _ := json.Marshal(resp)
 
@@ -202,7 +203,7 @@ func (prpc *ProductRPC) delete(msg *nats.Msg) {
 	}()
 
 	// Parsing request
-	var req product.DeleteProductRequest
+	var req token.DeleteTokenRequest
 	err := json.Unmarshal(msg.Data, &req)
 	if err != nil {
 		logger.Error(err.Error())
@@ -210,12 +211,12 @@ func (prpc *ProductRPC) delete(msg *nats.Msg) {
 		return
 	}
 
-	// Delete specific product
-	err = prpc.productManager.DeleteProduct(req.Name)
+	// Delete specific token
+	err = trpc.tokenManager.DeleteToken(req.TokenID)
 	if err != nil {
 		logger.Error(err.Error())
 
-		if err == internal.ErrProductNotFound {
+		if err == internal.ErrTokenNotFound {
 			resp.Error = &core.Error{
 				Code:    44404,
 				Message: err.Error(),
@@ -228,10 +229,10 @@ func (prpc *ProductRPC) delete(msg *nats.Msg) {
 	}
 }
 
-func (prpc *ProductRPC) info(msg *nats.Msg) {
+func (trpc *TokenRPC) info(msg *nats.Msg) {
 
 	// Prepare response message
-	resp := &product.InfoProductReply{}
+	resp := &token.InfoTokenReply{}
 	defer func() {
 		data, _ := json.Marshal(resp)
 
@@ -244,7 +245,7 @@ func (prpc *ProductRPC) info(msg *nats.Msg) {
 	}()
 
 	// Parsing request
-	var req product.InfoProductRequest
+	var req token.InfoTokenRequest
 	err := json.Unmarshal(msg.Data, &req)
 	if err != nil {
 		logger.Error(err.Error())
@@ -252,12 +253,12 @@ func (prpc *ProductRPC) info(msg *nats.Msg) {
 		return
 	}
 
-	// Get information of specific product
-	setting, err := prpc.productManager.GetProduct(req.Name)
+	// Get information of specific token
+	setting, err := trpc.tokenManager.GetToken(req.TokenID)
 	if err != nil {
 		logger.Error(err.Error())
 
-		if err == internal.ErrProductNotFound {
+		if err == internal.ErrTokenNotFound {
 			resp.Error = &core.Error{
 				Code:    44404,
 				Message: err.Error(),
@@ -270,46 +271,4 @@ func (prpc *ProductRPC) info(msg *nats.Msg) {
 	}
 
 	resp.Setting = setting
-}
-
-func (prpc *ProductRPC) purge(msg *nats.Msg) {
-
-	// Prepare response message
-	resp := &product.PurgeProductReply{}
-	defer func() {
-		data, _ := json.Marshal(resp)
-
-		// Response
-		err := msg.Respond(data)
-		if err != nil {
-			logger.Error(err.Error())
-			return
-		}
-	}()
-
-	// Parsing request
-	var req product.PurgeProductRequest
-	err := json.Unmarshal(msg.Data, &req)
-	if err != nil {
-		logger.Error(err.Error())
-		resp.Error = InternalServerErr()
-		return
-	}
-
-	// Purge specific product
-	err = prpc.productManager.PurgeProduct(req.Name)
-	if err != nil {
-		logger.Error(err.Error())
-
-		if err == internal.ErrProductNotFound {
-			resp.Error = &core.Error{
-				Code:    44404,
-				Message: err.Error(),
-			}
-		} else {
-			resp.Error = InternalServerErr()
-		}
-
-		return
-	}
 }
