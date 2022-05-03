@@ -51,39 +51,39 @@ func New(lifecycle fx.Lifecycle, config *configs.Config, l *zap.Logger, c *conne
 	return d
 }
 
-func (d *Dispatcher) productSettingsUpdated(op config_store.ConfigOp, productName string, data []byte) {
+func (d *Dispatcher) productSettingsUpdated(entry *config_store.ConfigEntry) {
 
 	logger.Info("Syncing data product settings",
-		zap.String("name", productName),
+		zap.String("name", entry.Key),
 	)
 
 	// Delete product
-	if op == config_store.ConfigDelete {
+	if entry.Operation == config_store.ConfigDelete {
 		logger.Info("Delete product",
-			zap.String("product", productName),
+			zap.String("product", entry.Key),
 		)
-		d.productManager.DeleteProduct(productName)
+		d.productManager.DeleteProduct(entry.Key)
 		return
 	}
 
 	// Parsing setting
 	var setting product_sdk.ProductSetting
-	err := json.Unmarshal(data, &setting)
+	err := json.Unmarshal(entry.Value, &setting)
 	if err != nil {
 		logger.Error("Failed to sync:",
 			zap.Error(err),
-			zap.String("op", op.String()),
-			zap.String("raw", string(data)),
+			zap.String("op", entry.Operation.String()),
+			zap.String("raw", string(entry.Value)),
 		)
 
 		return
 	}
 
 	// Create or update data product
-	err = d.productManager.ApplySettings(productName, &setting)
+	err = d.productManager.ApplySettings(entry.Key, &setting)
 	if err != nil {
 		logger.Error("Failed to load data product settings",
-			zap.String("product", productName),
+			zap.String("product", entry.Key),
 		)
 		logger.Error(err.Error())
 		return

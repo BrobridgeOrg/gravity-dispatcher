@@ -13,6 +13,8 @@ require (
 	github.com/chenzhuoyu/base64x v0.0.0-20211229061535-45e1f0233683 // indirect
 	github.com/d5/tengo v1.24.8
 	github.com/dop251/goja v0.0.0-20220214123719-b09a6bfa842f // indirect
+	github.com/gin-gonic/gin v1.4.0
+	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/google/uuid v1.3.0
 	github.com/json-iterator/go v1.1.12
 	github.com/klauspost/cpuid/v2 v2.0.11 // indirect

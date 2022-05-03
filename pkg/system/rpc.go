@@ -19,17 +19,6 @@ func NewRPC(connector *connector.Connector) RPC {
 	}
 }
 
-func (rpc *RPC) initializeRPC() error {
-
-	rpc.routes = make(map[string]*Route)
-	/*
-		rpc.routes.Handle("VIEW.CREATE", rpc.createSnapshotView)
-		rpc.routes.Handle("VIEW.DELETE", rpc.deleteSnapshotView)
-		rpc.routes.Handle("VIEW.PULL", rpc.pullSnapshotView)
-	*/
-	return nil
-}
-
 func (rpc *RPC) createRoute(name string, prefix string) (*Route, error) {
 
 	route := NewRoute(rpc, prefix)

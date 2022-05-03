@@ -8,24 +8,25 @@ import (
 	internal "github.com/BrobridgeOrg/gravity-dispatcher/pkg/system/internal"
 	"github.com/BrobridgeOrg/gravity-sdk/core"
 	"github.com/BrobridgeOrg/gravity-sdk/product"
-	"github.com/nats-io/nats.go"
 	"go.uber.org/zap"
 )
 
 type ProductRPC struct {
 	RPC
 
+	system         *System
 	connector      *connector.Connector
 	productManager *internal.ProductManager
 }
 
-func NewProductRPC(connector *connector.Connector) *ProductRPC {
+func NewProductRPC(s *System) *ProductRPC {
 
-	rpc := NewRPC(connector)
+	rpc := NewRPC(s.connector)
 
 	prpc := &ProductRPC{
 		RPC:       rpc,
-		connector: connector,
+		system:    s,
+		connector: s.connector,
 	}
 
 	return prpc
@@ -53,36 +54,28 @@ func (prpc *ProductRPC) initialize() error {
 	)
 
 	route, _ := prpc.createRoute("admin", prefix)
-	route.Handle("LIST", prpc.list)
-	route.Handle("CREATE", prpc.create)
-	route.Handle("UPDATE", prpc.update)
-	route.Handle("DELETE", prpc.delete)
-	route.Handle("INFO", prpc.info)
-	route.Handle("PURGE", prpc.purge)
+	route.Use(RequiredAuth())
+	route.Handle("LIST", RequiredPermissions("PRODUCT.LIST"), prpc.list)
+	route.Handle("CREATE", RequiredPermissions("PRODUCT.CREATE"), prpc.create)
+	route.Handle("UPDATE", RequiredPermissions("PRODUCT.UPDATE"), prpc.update)
+	route.Handle("DELETE", RequiredPermissions("PRODUCT.DELETE"), prpc.delete)
+	route.Handle("INFO", RequiredPermissions("PRODUCT.INFO"), prpc.info)
+	route.Handle("PURGE", RequiredPermissions("PRODUCT.PURGE"), prpc.purge)
 
 	return nil
 }
 
-func (prpc *ProductRPC) list(msg *nats.Msg) {
+func (prpc *ProductRPC) list(ctx *RPCContext) {
 
 	// Prepare response message
 	resp := &product.ListProductsReply{}
-	defer func() {
-		data, _ := json.Marshal(resp)
-
-		// Response
-		err := msg.Respond(data)
-		if err != nil {
-			logger.Error(err.Error())
-			return
-		}
-	}()
+	ctx.Res.Data = resp
 
 	// Parsing request
 	var req product.ListProductsRequest
-	err := json.Unmarshal(msg.Data, &req)
+	err := json.Unmarshal(ctx.Req.Data, &req)
 	if err != nil {
-		logger.Error(err.Error())
+		ctx.Res.Error = err
 		resp.Error = InternalServerErr()
 		return
 	}
@@ -90,7 +83,7 @@ func (prpc *ProductRPC) list(msg *nats.Msg) {
 	// List products
 	settings, err := prpc.productManager.ListProducts()
 	if err != nil {
-		logger.Error(err.Error())
+		ctx.Res.Error = err
 		resp.Error = InternalServerErr()
 		return
 	}
@@ -98,26 +91,17 @@ func (prpc *ProductRPC) list(msg *nats.Msg) {
 	resp.Products = settings
 }
 
-func (prpc *ProductRPC) create(msg *nats.Msg) {
+func (prpc *ProductRPC) create(ctx *RPCContext) {
 
 	// Prepare response message
 	resp := &product.CreateProductReply{}
-	defer func() {
-		data, _ := json.Marshal(resp)
-
-		// Response
-		err := msg.Respond(data)
-		if err != nil {
-			logger.Error(err.Error())
-			return
-		}
-	}()
+	ctx.Res.Data = resp
 
 	// Parsing request
 	var req product.CreateProductRequest
-	err := json.Unmarshal(msg.Data, &req)
+	err := json.Unmarshal(ctx.Req.Data, &req)
 	if err != nil {
-		logger.Error(err.Error())
+		ctx.Res.Error = err
 		resp.Error = InternalServerErr()
 		return
 	}
@@ -125,7 +109,7 @@ func (prpc *ProductRPC) create(msg *nats.Msg) {
 	// Create a new product
 	setting, err := prpc.productManager.CreateProduct(req.Setting)
 	if err != nil {
-		logger.Error(err.Error())
+		ctx.Res.Error = err
 
 		if err == internal.ErrProductExistsAlready {
 			resp.Error = &core.Error{
@@ -142,26 +126,17 @@ func (prpc *ProductRPC) create(msg *nats.Msg) {
 	resp.Setting = setting
 }
 
-func (prpc *ProductRPC) update(msg *nats.Msg) {
+func (prpc *ProductRPC) update(ctx *RPCContext) {
 
 	// Prepare response message
 	resp := &product.UpdateProductReply{}
-	defer func() {
-		data, _ := json.Marshal(resp)
-
-		// Response
-		err := msg.Respond(data)
-		if err != nil {
-			logger.Error(err.Error())
-			return
-		}
-	}()
+	ctx.Res.Data = resp
 
 	// Parsing request
 	var req product.UpdateProductRequest
-	err := json.Unmarshal(msg.Data, &req)
+	err := json.Unmarshal(ctx.Req.Data, &req)
 	if err != nil {
-		logger.Error(err.Error())
+		ctx.Res.Error = err
 		resp.Error = InternalServerErr()
 		return
 	}
@@ -169,7 +144,7 @@ func (prpc *ProductRPC) update(msg *nats.Msg) {
 	// Update specific product
 	setting, err := prpc.productManager.UpdateProduct(req.Name, req.Setting)
 	if err != nil {
-		logger.Error(err.Error())
+		ctx.Res.Error = err
 
 		if err == internal.ErrProductNotFound {
 			resp.Error = &core.Error{
@@ -186,26 +161,17 @@ func (prpc *ProductRPC) update(msg *nats.Msg) {
 	resp.Setting = setting
 }
 
-func (prpc *ProductRPC) delete(msg *nats.Msg) {
+func (prpc *ProductRPC) delete(ctx *RPCContext) {
 
 	// Prepare response message
 	resp := &product.DeleteProductReply{}
-	defer func() {
-		data, _ := json.Marshal(resp)
-
-		// Response
-		err := msg.Respond(data)
-		if err != nil {
-			logger.Error(err.Error())
-			return
-		}
-	}()
+	ctx.Res.Data = resp
 
 	// Parsing request
 	var req product.DeleteProductRequest
-	err := json.Unmarshal(msg.Data, &req)
+	err := json.Unmarshal(ctx.Req.Data, &req)
 	if err != nil {
-		logger.Error(err.Error())
+		ctx.Res.Error = err
 		resp.Error = InternalServerErr()
 		return
 	}
@@ -213,7 +179,7 @@ func (prpc *ProductRPC) delete(msg *nats.Msg) {
 	// Delete specific product
 	err = prpc.productManager.DeleteProduct(req.Name)
 	if err != nil {
-		logger.Error(err.Error())
+		ctx.Res.Error = err
 
 		if err == internal.ErrProductNotFound {
 			resp.Error = &core.Error{
@@ -228,26 +194,17 @@ func (prpc *ProductRPC) delete(msg *nats.Msg) {
 	}
 }
 
-func (prpc *ProductRPC) info(msg *nats.Msg) {
+func (prpc *ProductRPC) info(ctx *RPCContext) {
 
 	// Prepare response message
 	resp := &product.InfoProductReply{}
-	defer func() {
-		data, _ := json.Marshal(resp)
-
-		// Response
-		err := msg.Respond(data)
-		if err != nil {
-			logger.Error(err.Error())
-			return
-		}
-	}()
+	ctx.Res.Data = resp
 
 	// Parsing request
 	var req product.InfoProductRequest
-	err := json.Unmarshal(msg.Data, &req)
+	err := json.Unmarshal(ctx.Req.Data, &req)
 	if err != nil {
-		logger.Error(err.Error())
+		ctx.Res.Error = err
 		resp.Error = InternalServerErr()
 		return
 	}
@@ -255,7 +212,7 @@ func (prpc *ProductRPC) info(msg *nats.Msg) {
 	// Get information of specific product
 	setting, err := prpc.productManager.GetProduct(req.Name)
 	if err != nil {
-		logger.Error(err.Error())
+		ctx.Res.Error = err
 
 		if err == internal.ErrProductNotFound {
 			resp.Error = &core.Error{
@@ -272,26 +229,17 @@ func (prpc *ProductRPC) info(msg *nats.Msg) {
 	resp.Setting = setting
 }
 
-func (prpc *ProductRPC) purge(msg *nats.Msg) {
+func (prpc *ProductRPC) purge(ctx *RPCContext) {
 
 	// Prepare response message
 	resp := &product.PurgeProductReply{}
-	defer func() {
-		data, _ := json.Marshal(resp)
-
-		// Response
-		err := msg.Respond(data)
-		if err != nil {
-			logger.Error(err.Error())
-			return
-		}
-	}()
+	ctx.Res.Data = resp
 
 	// Parsing request
 	var req product.PurgeProductRequest
-	err := json.Unmarshal(msg.Data, &req)
+	err := json.Unmarshal(ctx.Req.Data, &req)
 	if err != nil {
-		logger.Error(err.Error())
+		ctx.Res.Error = err
 		resp.Error = InternalServerErr()
 		return
 	}
@@ -299,7 +247,7 @@ func (prpc *ProductRPC) purge(msg *nats.Msg) {
 	// Purge specific product
 	err = prpc.productManager.PurgeProduct(req.Name)
 	if err != nil {
-		logger.Error(err.Error())
+		ctx.Res.Error = err
 
 		if err == internal.ErrProductNotFound {
 			resp.Error = &core.Error{

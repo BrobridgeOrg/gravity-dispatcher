@@ -2,6 +2,7 @@ package system
 
 import (
 	"context"
+	"errors"
 
 	"github.com/BrobridgeOrg/gravity-dispatcher/pkg/configs"
 	"github.com/BrobridgeOrg/gravity-dispatcher/pkg/connector"
@@ -13,11 +14,13 @@ import (
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 var logger *zap.Logger
+var system *System
 
 type System struct {
 	config    *configs.Config
 	connector *connector.Connector
 
+	sysConfig  *Config
 	productRPC *ProductRPC
 	tokenRPC   *TokenRPC
 }
@@ -26,10 +29,12 @@ func New(lifecycle fx.Lifecycle, config *configs.Config, l *zap.Logger, c *conne
 
 	logger = l.Named("System")
 
-	system := &System{
+	s := &System{
 		config:    config,
 		connector: c,
 	}
+
+	system = s
 
 	lifecycle.Append(
 		fx.Hook{
@@ -42,20 +47,27 @@ func New(lifecycle fx.Lifecycle, config *configs.Config, l *zap.Logger, c *conne
 		},
 	)
 
-	return system
+	return s
 }
 
 func (system *System) initialize() error {
 
-	logger.Info("Initializing system...")
+	logger.Info("Loading system configuration...")
 
-	system.productRPC = NewProductRPC(system.connector)
+	// Initialize system configuration
+	system.sysConfig = NewConfig(system.connector)
+	if system.sysConfig == nil {
+		return errors.New("Failed to create config client")
+	}
+
+	// Initializing RPC hanlers
+	system.productRPC = NewProductRPC(system)
 	err := system.productRPC.initialize()
 	if err != nil {
 		return err
 	}
 
-	system.tokenRPC = NewTokenRPC(system.connector)
+	system.tokenRPC = NewTokenRPC(system)
 	err = system.tokenRPC.initialize()
 	if err != nil {
 		return err
