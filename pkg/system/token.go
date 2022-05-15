@@ -56,11 +56,11 @@ func (trpc *TokenRPC) initialize() error {
 	route, _ := trpc.createRoute("admin", prefix)
 	route.Use(RequiredAuth())
 	route.Handle("LIST_AVAILABLE_PERMISSIONS", trpc.getAvailablePermissions)
-	route.Handle("LIST", trpc.list)
-	route.Handle("CREATE", trpc.create)
-	route.Handle("UPDATE", trpc.update)
-	route.Handle("DELETE", trpc.delete)
-	route.Handle("INFO", trpc.info)
+	route.Handle("LIST", RequiredPermissions("TOKEN.LIST"), trpc.list)
+	route.Handle("CREATE", RequiredPermissions("TOKEN.CREATE"), trpc.create)
+	route.Handle("UPDATE", RequiredPermissions("TOKEN.UPDATE"), trpc.update)
+	route.Handle("DELETE", RequiredPermissions("TOKEN.DELETE"), trpc.delete)
+	route.Handle("INFO", RequiredPermissions("TOKEN.INFO"), trpc.info)
 
 	return nil
 }
