@@ -5,14 +5,8 @@ import (
 	internal "github.com/BrobridgeOrg/gravity-dispatcher/pkg/system/internal"
 )
 
-type Secret struct {
-	Key string `json:"key"`
-}
-
 type Config struct {
 	configManager *internal.ConfigManager
-
-	secret *Secret
 }
 
 func NewConfig(c *connector.Connector) *Config {
@@ -40,13 +34,13 @@ func NewConfig(c *connector.Connector) *Config {
 
 func (cfg *Config) initialize() error {
 
-	value, err := cfg.configManager.InitializeEntry("secret", func() []byte {
+	_, err := cfg.configManager.InitializeEntry("secret", func() []byte {
 
 		logger.Info("Initializing secret configurations...")
 
 		// Genereate a new key for initializing
 		key, _ := internal.GenerateRandomString(64)
-		secret := Secret{
+		secret := internal.ConfigEntrySecret{
 			Key: key,
 		}
 
@@ -58,32 +52,26 @@ func (cfg *Config) initialize() error {
 		return err
 	}
 
-	// Parsing
-	var secret Secret
-	err = json.Unmarshal(value, &secret)
+	_, err = cfg.configManager.InitializeEntry("auth", func() []byte {
+
+		logger.Info("Initializing auth configurations...")
+
+		// Disabled auth by default
+		authConfig := internal.ConfigEntryAuth{
+			Enabled: false,
+		}
+
+		data, _ := json.Marshal(authConfig)
+
+		return data
+	})
 	if err != nil {
 		return err
 	}
 
-	cfg.secret = &secret
-
 	return nil
 }
 
-func (cfg *Config) GetSecret(key string) (*Secret, error) {
-
-	// Getting original config entry
-	entry := cfg.configManager.GetEntry(key)
-	if entry == nil {
-		return nil, nil
-	}
-
-	// Parsing
-	var secret Secret
-	err := json.Unmarshal(entry.Value, &secret)
-	if err != nil {
-		return nil, err
-	}
-
-	return &secret, nil
+func (cfg *Config) GetEntry(key string) internal.IConfigEntry {
+	return cfg.configManager.GetEntry(key)
 }

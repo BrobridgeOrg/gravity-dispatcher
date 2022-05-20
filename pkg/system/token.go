@@ -144,7 +144,7 @@ func (trpc *TokenRPC) create(ctx *RPCContext) {
 	}
 
 	// Encode token to JWT
-	jwtString, err := EncodeToken(trpc.system.sysConfig.secret.Key, req.TokenID)
+	jwtString, err := EncodeToken(trpc.system.sysConfig.GetEntry("secret").Secret().Key, req.TokenID)
 	if err != nil {
 		ctx.Res.Error = err
 		resp.Error = InternalServerErr()

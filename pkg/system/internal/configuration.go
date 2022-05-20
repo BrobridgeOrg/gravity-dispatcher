@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/BrobridgeOrg/gravity-sdk/config_store"
@@ -12,14 +13,14 @@ type ConfigManager struct {
 	client      *core.Client
 	configStore *config_store.ConfigStore
 
-	entries map[string]*config_store.ConfigEntry
+	entries map[string]*ConfigEntry
 }
 
 func NewConfigManager(client *core.Client, domain string) *ConfigManager {
 
 	cm := &ConfigManager{
 		client:  client,
-		entries: make(map[string]*config_store.ConfigEntry),
+		entries: make(map[string]*ConfigEntry),
 	}
 
 	cm.configStore = config_store.NewConfigStore(client,
@@ -45,11 +46,46 @@ func (cm *ConfigManager) updated(entry *config_store.ConfigEntry) {
 	case config_store.ConfigUpdate:
 		fallthrough
 	case config_store.ConfigCreate:
-		cm.entries[entry.Key] = entry
+		err := cm.updatedEntry(entry)
+		if err != nil {
+			fmt.Printf("Failed to update config entry \"%s\" : %v\n", entry.Key, err)
+		}
 	}
 }
 
-func (cm *ConfigManager) GetEntry(key string) *config_store.ConfigEntry {
+func (cm *ConfigManager) updatedEntry(entry *config_store.ConfigEntry) error {
+
+	switch entry.Key {
+	case "secret":
+
+		// Parsing
+		var secret ConfigEntrySecret
+		err := json.Unmarshal(entry.Value, &secret)
+		if err != nil {
+			return err
+		}
+
+		cm.entries[entry.Key] = &ConfigEntry{
+			secret: &secret,
+		}
+	case "auth":
+
+		// Parsing
+		var auth ConfigEntryAuth
+		err := json.Unmarshal(entry.Value, &auth)
+		if err != nil {
+			return err
+		}
+
+		cm.entries[entry.Key] = &ConfigEntry{
+			auth: &auth,
+		}
+	}
+
+	return nil
+}
+
+func (cm *ConfigManager) GetEntry(key string) *ConfigEntry {
 
 	if entry, ok := cm.entries[key]; ok {
 		return entry
@@ -67,6 +103,8 @@ func (cm *ConfigManager) InitializeEntry(key string, initialFn func() []byte) ([
 
 	if err == nats.ErrKeyNotFound {
 		value := initialFn()
+
+		// TODO: It should check revision of entry
 		_, err = cm.configStore.Put(key, value)
 		if err != nil {
 			return nil, err
@@ -76,4 +114,41 @@ func (cm *ConfigManager) InitializeEntry(key string, initialFn func() []byte) ([
 	}
 
 	return nil, err
+}
+
+func (cm *ConfigManager) SetEntry(key string, value []byte) error {
+
+	_, err := cm.configStore.Put(key, value)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Configuration entry interface
+type ConfigEntrySecret struct {
+	Key string `json:"key"`
+}
+
+type ConfigEntryAuth struct {
+	Enabled bool `json:"enabled"`
+}
+
+type IConfigEntry interface {
+	Secret() *ConfigEntrySecret
+	Auth() *ConfigEntryAuth
+}
+
+type ConfigEntry struct {
+	secret *ConfigEntrySecret
+	auth   *ConfigEntryAuth
+}
+
+func (ce *ConfigEntry) Secret() *ConfigEntrySecret {
+	return ce.secret
+}
+
+func (ce *ConfigEntry) Auth() *ConfigEntryAuth {
+	return ce.auth
 }

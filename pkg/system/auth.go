@@ -54,6 +54,10 @@ func EncodeToken(secretKey string, tokenID string) (string, error) {
 func RequiredAuth() RPCHandler {
 	return func(ctx *RPCContext) {
 
+		if !system.sysConfig.GetEntry("auth").Auth().Enabled {
+			return
+		}
+
 		// Getting token from header
 		token, ok := ctx.Req.Header["Authorization"]
 		if !ok {
@@ -62,7 +66,7 @@ func RequiredAuth() RPCHandler {
 
 		// Decode token
 		tokenClaims, err := jwt.ParseWithClaims(token.(string), &Claims{}, func(token *jwt.Token) (i interface{}, err error) {
-			return system.sysConfig.secret.Key, nil
+			return system.sysConfig.GetEntry("secret").Secret().Key, nil
 		})
 		if err != nil {
 			ctx.Res.Error = err
@@ -79,6 +83,10 @@ func RequiredAuth() RPCHandler {
 func RequiredPermissions(permissions ...string) RPCHandler {
 
 	return func(ctx *RPCContext) {
+
+		if !system.sysConfig.GetEntry("auth").Auth().Enabled {
+			return
+		}
 
 		v, ok := ctx.Req.Header["token"]
 		if !ok {
