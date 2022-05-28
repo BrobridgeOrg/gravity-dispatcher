@@ -2,7 +2,6 @@ package system
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/golang-jwt/jwt"
 )
@@ -120,8 +119,6 @@ func RequiredPermissions(permissions ...string) RPCHandler {
 
 			return
 		}
-
-		fmt.Println(claims.TokenID)
 
 		ctx.Req.Header["tokenInfo"] = tokenInfo
 
