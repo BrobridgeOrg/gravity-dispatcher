@@ -21,6 +21,7 @@ type System struct {
 	connector *connector.Connector
 
 	sysConfig  *Config
+	coreRPC    *CoreRPC
 	productRPC *ProductRPC
 	tokenRPC   *TokenRPC
 }
@@ -61,8 +62,14 @@ func (system *System) initialize() error {
 	}
 
 	// Initializing RPC hanlers
+	system.coreRPC = NewCoreRPC(system)
+	err := system.coreRPC.initialize()
+	if err != nil {
+		return err
+	}
+
 	system.productRPC = NewProductRPC(system)
-	err := system.productRPC.initialize()
+	err = system.productRPC.initialize()
 	if err != nil {
 		return err
 	}

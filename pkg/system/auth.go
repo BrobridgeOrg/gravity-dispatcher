@@ -2,6 +2,7 @@ package system
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/golang-jwt/jwt"
 )
@@ -33,41 +34,49 @@ var availablePermissions = Permissions{
 }
 
 type Claims struct {
+	TokenID string `json:"tokenID"`
 	jwt.StandardClaims
-	TokenID string
 }
 
-func EncodeToken(secretKey string, tokenID string) (string, error) {
+func EncodeToken(tokenID string) (string, error) {
 
-	t := jwt.New(jwt.GetSigningMethod("ES512"))
-
-	t.Claims = &Claims{
+	claims := &Claims{
+		tokenID,
 		jwt.StandardClaims{
+			Issuer: "Gravity",
 			//ExpiresAt: time.Now().Add(time.Minute * 1).Unix(),
 		},
-		tokenID,
 	}
 
-	return t.SignedString(secretKey)
+	t := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	return t.SignedString([]byte(system.sysConfig.GetEntry("secret").Secret().Key))
+}
+
+func DecodeToken(tokenString string) (*Claims, error) {
+
+	// Decode token
+	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (i interface{}, err error) {
+		return []byte(system.sysConfig.GetEntry("secret").Secret().Key), nil
+	})
+
+	return token.Claims.(*Claims), err
 }
 
 func RequiredAuth() RPCHandler {
 	return func(ctx *RPCContext) {
-
-		if !system.sysConfig.GetEntry("auth").Auth().Enabled {
-			return
-		}
-
 		// Getting token from header
-		token, ok := ctx.Req.Header["Authorization"]
+		tokens, ok := ctx.Req.Header["Authorization"]
 		if !ok {
 			return
 		}
 
+		if len(tokens.([]string)) == 0 {
+			return
+		}
+
 		// Decode token
-		tokenClaims, err := jwt.ParseWithClaims(token.(string), &Claims{}, func(token *jwt.Token) (i interface{}, err error) {
-			return system.sysConfig.GetEntry("secret").Secret().Key, nil
-		})
+		claims, err := DecodeToken(tokens.([]string)[0])
 		if err != nil {
 			ctx.Res.Error = err
 			reply := &ErrorRPCState{}
@@ -76,7 +85,7 @@ func RequiredAuth() RPCHandler {
 			return
 		}
 
-		ctx.Req.Header["token"] = tokenClaims
+		ctx.Req.Header["token"] = claims
 	}
 }
 
@@ -84,12 +93,13 @@ func RequiredPermissions(permissions ...string) RPCHandler {
 
 	return func(ctx *RPCContext) {
 
-		if !system.sysConfig.GetEntry("auth").Auth().Enabled {
-			return
-		}
-
 		v, ok := ctx.Req.Header["token"]
 		if !ok {
+
+			if !system.sysConfig.GetEntry("auth").Auth().Enabled {
+				return
+			}
+
 			ctx.Res.Error = errors.New("Forbidden")
 			reply := &ErrorRPCState{}
 			reply.Error = ForbiddenErr()
@@ -110,6 +120,10 @@ func RequiredPermissions(permissions ...string) RPCHandler {
 
 			return
 		}
+
+		fmt.Println(claims.TokenID)
+
+		ctx.Req.Header["tokenInfo"] = tokenInfo
 
 		// Pass directly for administrator permission
 		if _, ok := tokenInfo.Permissions["ADMIN"]; ok {

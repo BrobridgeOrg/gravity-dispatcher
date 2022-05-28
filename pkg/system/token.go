@@ -126,6 +126,17 @@ func (trpc *TokenRPC) create(ctx *RPCContext) {
 
 	req.Setting.ID = req.TokenID
 
+	// Check permission settings
+	for perm, _ := range req.Setting.Permissions {
+		if _, ok := availablePermissions[perm]; !ok {
+			resp.Error = &core.Error{
+				Code:    44428,
+				Message: "Disallow to set unavailable permission",
+			}
+			return
+		}
+	}
+
 	// Create a new token
 	setting, err := trpc.tokenManager.CreateToken(req.TokenID, req.Setting)
 	if err != nil {
@@ -133,7 +144,7 @@ func (trpc *TokenRPC) create(ctx *RPCContext) {
 
 		if err == internal.ErrTokenExistsAlready {
 			resp.Error = &core.Error{
-				Code:    44400,
+				Code:    44409,
 				Message: err.Error(),
 			}
 		} else {
@@ -144,7 +155,7 @@ func (trpc *TokenRPC) create(ctx *RPCContext) {
 	}
 
 	// Encode token to JWT
-	jwtString, err := EncodeToken(trpc.system.sysConfig.GetEntry("secret").Secret().Key, req.TokenID)
+	jwtString, err := EncodeToken(req.TokenID)
 	if err != nil {
 		ctx.Res.Error = err
 		resp.Error = InternalServerErr()
@@ -168,6 +179,17 @@ func (trpc *TokenRPC) update(ctx *RPCContext) {
 		ctx.Res.Error = err
 		resp.Error = InternalServerErr()
 		return
+	}
+
+	// Check permission settings
+	for perm, _ := range req.Setting.Permissions {
+		if _, ok := availablePermissions[perm]; !ok {
+			resp.Error = &core.Error{
+				Code:    44428,
+				Message: "Disallow to set unavailable permission",
+			}
+			return
+		}
 	}
 
 	// Update specific token
@@ -255,5 +277,6 @@ func (trpc *TokenRPC) info(ctx *RPCContext) {
 		return
 	}
 
+	resp.Token, _ = EncodeToken(req.TokenID)
 	resp.Setting = setting
 }

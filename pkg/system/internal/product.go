@@ -12,6 +12,11 @@ import (
 	"github.com/nats-io/nats.go"
 )
 
+const (
+	productEventStream  = "GVT_%s_DP_%s"
+	productEventSubject = "$GVT.%s.DP.%s.%s.EVENT.>"
+)
+
 var (
 	ErrProductNotFound      = errors.New("product not found")
 	ErrProductExistsAlready = errors.New("product exists already")
@@ -20,6 +25,7 @@ var (
 
 type ProductManager struct {
 	client      *core.Client
+	domain      string
 	configStore *config_store.ConfigStore
 }
 
@@ -27,6 +33,7 @@ func NewProductManager(client *core.Client, domain string) *ProductManager {
 
 	pm := &ProductManager{
 		client: client,
+		domain: domain,
 	}
 
 	pm.configStore = config_store.NewConfigStore(client,
@@ -195,4 +202,56 @@ func (pm *ProductManager) ListProducts() ([]*product.ProductSetting, error) {
 	}
 
 	return products, nil
+}
+
+func (pm *ProductManager) PrepareSubscription(productName string, durable string, startSeq uint64) error {
+
+	js, err := pm.client.GetJetStream()
+	if err != nil {
+		return err
+	}
+
+	// Check if the stream already exists
+	streamName := fmt.Sprintf(productEventStream, pm.domain, productName)
+	_, err = js.StreamInfo(streamName)
+	if err != nil {
+		return err
+	}
+
+	// Check wheter consumer exist or not
+	_, err = js.ConsumerInfo(streamName, streamName)
+	if err != nats.ErrConsumerNotFound {
+		return err
+	}
+
+	// The consumer exists already
+	if err == nil {
+		return nil
+	}
+
+	// Preparing push consumer
+	subject := fmt.Sprintf(productEventSubject, pm.domain, productName, "*")
+	cfg := &nats.ConsumerConfig{
+		Durable:        durable,
+		Description:    "Product Subscription",
+		DeliverSubject: nats.NewInbox(),
+		FilterSubject:  subject,
+		AckPolicy:      nats.AckAllPolicy,
+		MaxAckPending:  20000,
+		MaxDeliver:     -1,
+		ReplayPolicy:   nats.ReplayInstantPolicy,
+	}
+
+	if startSeq > 0 {
+		cfg.DeliverPolicy = nats.DeliverByStartSequencePolicy
+		cfg.OptStartSeq = startSeq
+	}
+
+	// Create consumer on data product stream
+	_, err = js.AddConsumer(streamName, cfg)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

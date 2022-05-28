@@ -8,6 +8,7 @@ import (
 	internal "github.com/BrobridgeOrg/gravity-dispatcher/pkg/system/internal"
 	"github.com/BrobridgeOrg/gravity-sdk/core"
 	"github.com/BrobridgeOrg/gravity-sdk/product"
+	"github.com/BrobridgeOrg/gravity-sdk/token"
 	"go.uber.org/zap"
 )
 
@@ -61,6 +62,7 @@ func (prpc *ProductRPC) initialize() error {
 	route.Handle("DELETE", RequiredPermissions("PRODUCT.DELETE"), prpc.delete)
 	route.Handle("INFO", RequiredPermissions("PRODUCT.INFO"), prpc.info)
 	route.Handle("PURGE", RequiredPermissions("PRODUCT.PURGE"), prpc.purge)
+	route.Handle("PREPARE_SUBSCRIPTION", RequiredPermissions("PRODUCT.SUBSCRIPTION"), prpc.prepareSubscription)
 
 	return nil
 }
@@ -258,6 +260,39 @@ func (prpc *ProductRPC) purge(ctx *RPCContext) {
 			resp.Error = InternalServerErr()
 		}
 
+		return
+	}
+}
+
+func (prpc *ProductRPC) prepareSubscription(ctx *RPCContext) {
+
+	// Prepare response message
+	resp := &product.PrepareSubscriptionReply{}
+	ctx.Res.Data = resp
+
+	// Parsing request
+	var req product.PrepareSubscriptionRequest
+	err := json.Unmarshal(ctx.Req.Data, &req)
+	if err != nil {
+		ctx.Res.Error = err
+		resp.Error = InternalServerErr()
+		return
+	}
+
+	// Getting token information
+	if ctx.Req.Header["tokenInfo"] == nil {
+		return
+	}
+
+	tokenInfo := ctx.Req.Header["tokenInfo"].(*token.TokenSetting)
+
+	//TODO: Check permission
+
+	// Purge specific product
+	err = prpc.productManager.PrepareSubscription(req.Product, tokenInfo.ID, 0)
+	if err != nil {
+		ctx.Res.Error = err
+		resp.Error = InternalServerErr()
 		return
 	}
 }
