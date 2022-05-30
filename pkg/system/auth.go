@@ -58,15 +58,27 @@ func DecodeToken(tokenString string) (*Claims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (i interface{}, err error) {
 		return []byte(system.sysConfig.GetEntry("secret").Secret().Key), nil
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	return token.Claims.(*Claims), err
 }
 
 func RequiredAuth() RPCHandler {
 	return func(ctx *RPCContext) {
+
 		// Getting token from header
 		tokens, ok := ctx.Req.Header["Authorization"]
 		if !ok {
+
+			if system.sysConfig.GetEntry("auth").Auth().Enabled {
+				ctx.Res.Error = errors.New("Forbidden")
+				reply := &ErrorRPCState{}
+				reply.Error = ForbiddenErr()
+				ctx.Res.Data = reply
+			}
+
 			return
 		}
 
@@ -77,7 +89,7 @@ func RequiredAuth() RPCHandler {
 		// Decode token
 		claims, err := DecodeToken(tokens.([]string)[0])
 		if err != nil {
-			ctx.Res.Error = err
+			ctx.Res.Error = errors.New("Forbidden")
 			reply := &ErrorRPCState{}
 			reply.Error = ForbiddenErr()
 			ctx.Res.Data = reply
@@ -95,14 +107,13 @@ func RequiredPermissions(permissions ...string) RPCHandler {
 		v, ok := ctx.Req.Header["token"]
 		if !ok {
 
-			if !system.sysConfig.GetEntry("auth").Auth().Enabled {
-				return
+			if system.sysConfig.GetEntry("auth").Auth().Enabled {
+				ctx.Res.Error = errors.New("Forbidden")
+				reply := &ErrorRPCState{}
+				reply.Error = ForbiddenErr()
+				ctx.Res.Data = reply
 			}
 
-			ctx.Res.Error = errors.New("Forbidden")
-			reply := &ErrorRPCState{}
-			reply.Error = ForbiddenErr()
-			ctx.Res.Data = reply
 			return
 		}
 
