@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/BrobridgeOrg/gravity-sdk/config_store"
-	"github.com/BrobridgeOrg/gravity-sdk/core"
-	"github.com/BrobridgeOrg/gravity-sdk/product"
+	"github.com/BrobridgeOrg/gravity-sdk/v2/config_store"
+	"github.com/BrobridgeOrg/gravity-sdk/v2/core"
+	"github.com/BrobridgeOrg/gravity-sdk/v2/product"
 	"github.com/nats-io/nats.go"
 )
 
@@ -18,9 +18,11 @@ const (
 )
 
 var (
-	ErrProductNotFound      = errors.New("product not found")
-	ErrProductExistsAlready = errors.New("product exists already")
-	ErrInvalidProductName   = errors.New("invalid product name")
+	ErrInternalSystemFailure = errors.New("internal system failure")
+	ErrEventStoreNotFound    = errors.New("event store not found")
+	ErrProductNotFound       = errors.New("product not found")
+	ErrProductExistsAlready  = errors.New("product exists already")
+	ErrInvalidProductName    = errors.New("invalid product name")
 )
 
 type ProductManager struct {
@@ -170,6 +172,29 @@ func (pm *ProductManager) GetProduct(name string) (*product.ProductSetting, erro
 	}
 
 	return &productSetting, nil
+}
+
+func (pm *ProductManager) GetProductState(setting *product.ProductSetting) (*product.ProductState, error) {
+
+	js, err := pm.client.GetJetStream()
+	if err != nil {
+		return nil, ErrInternalSystemFailure
+	}
+
+	// Getting states from stream
+	s, err := js.StreamInfo(setting.Stream)
+	if err != nil {
+		return nil, ErrEventStoreNotFound
+	}
+
+	state := &product.ProductState{
+		EventCount: s.State.Msgs,
+		Bytes:      s.State.Bytes,
+		FirstTime:  s.State.FirstTime,
+		LastTime:   s.State.LastTime,
+	}
+
+	return state, nil
 }
 
 func (pm *ProductManager) ListProducts() ([]*product.ProductSetting, error) {

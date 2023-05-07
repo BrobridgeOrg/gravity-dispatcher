@@ -6,8 +6,8 @@ import (
 
 	"github.com/BrobridgeOrg/gravity-dispatcher/pkg/connector"
 	internal "github.com/BrobridgeOrg/gravity-dispatcher/pkg/system/internal"
-	"github.com/BrobridgeOrg/gravity-sdk/core"
-	"github.com/BrobridgeOrg/gravity-sdk/token"
+	"github.com/BrobridgeOrg/gravity-sdk/v2/core"
+	"github.com/BrobridgeOrg/gravity-sdk/v2/token"
 	"go.uber.org/zap"
 )
 

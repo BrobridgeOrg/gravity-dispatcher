@@ -6,9 +6,9 @@ import (
 
 	"github.com/BrobridgeOrg/gravity-dispatcher/pkg/connector"
 	internal "github.com/BrobridgeOrg/gravity-dispatcher/pkg/system/internal"
-	"github.com/BrobridgeOrg/gravity-sdk/core"
-	"github.com/BrobridgeOrg/gravity-sdk/product"
-	"github.com/BrobridgeOrg/gravity-sdk/token"
+	"github.com/BrobridgeOrg/gravity-sdk/v2/core"
+	"github.com/BrobridgeOrg/gravity-sdk/v2/product"
+	"github.com/BrobridgeOrg/gravity-sdk/v2/token"
 	"go.uber.org/zap"
 )
 
@@ -90,7 +90,24 @@ func (prpc *ProductRPC) list(ctx *RPCContext) {
 		return
 	}
 
-	resp.Products = settings
+	products := make([]*product.ProductInfo, 0)
+	for _, setting := range settings {
+
+		// Getting product state
+		state, err := prpc.productManager.GetProductState(setting)
+		if err != nil {
+			resp.Error = InternalServerErr()
+			return
+		}
+
+		p := &product.ProductInfo{}
+		p.Setting = setting
+		p.State = state
+
+		products = append(products, p)
+	}
+
+	resp.Products = products
 }
 
 func (prpc *ProductRPC) create(ctx *RPCContext) {
@@ -228,7 +245,15 @@ func (prpc *ProductRPC) info(ctx *RPCContext) {
 		return
 	}
 
+	// Getting product state
+	state, err := prpc.productManager.GetProductState(setting)
+	if err != nil {
+		resp.Error = InternalServerErr()
+		return
+	}
+
 	resp.Setting = setting
+	resp.State = state
 }
 
 func (prpc *ProductRPC) purge(ctx *RPCContext) {

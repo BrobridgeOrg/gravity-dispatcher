@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/BrobridgeOrg/gravity-sdk/config_store"
-	"github.com/BrobridgeOrg/gravity-sdk/core"
-	"github.com/BrobridgeOrg/gravity-sdk/token"
+	"github.com/BrobridgeOrg/gravity-sdk/v2/config_store"
+	"github.com/BrobridgeOrg/gravity-sdk/v2/core"
+	"github.com/BrobridgeOrg/gravity-sdk/v2/token"
 	"github.com/nats-io/nats.go"
 )
 

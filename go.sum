@@ -56,8 +56,8 @@ github.com/BrobridgeOrg/compton v0.0.0-20220617174904-7083c8a5102d h1:4AkkcvBq3o
 github.com/BrobridgeOrg/compton v0.0.0-20220617174904-7083c8a5102d/go.mod h1:BIpXs8Ch8yH9ruVK/QI36Vin1wWkut7J81K9dk92S20=
 github.com/BrobridgeOrg/gravity-api v0.2.17/go.mod h1:ky6XIYg5h95Cy+QjRQaI6LQABmQfqAAn+SCgbygxWOA=
 github.com/BrobridgeOrg/gravity-sdk v0.0.15/go.mod h1:vT/C81wbuOwRptqaFVSA+IZdWUvBhYrg+ArDQh+Lg4U=
-github.com/BrobridgeOrg/gravity-sdk v0.0.51-0.20220927071456-6af137a2b5d9 h1:NxPTUQsNG2eGqjbh9YhagpDUnYxqGz4Spy4KwkUly8Q=
-github.com/BrobridgeOrg/gravity-sdk v0.0.51-0.20220927071456-6af137a2b5d9/go.mod h1:jNxMus78fmpD9Fb+dqJYzzOJwPe6bgUhbVqpXrWcOhY=
+github.com/BrobridgeOrg/gravity-sdk/v2 v2.0.2 h1:jpvq5Eg7Z3CsCrCxPUgIDBkXCH0/LaqdC84OoZ2LiOc=
+github.com/BrobridgeOrg/gravity-sdk/v2 v2.0.2/go.mod h1:sQ0KBp/ek+IdFxuteRBRApf6IFeA2HcsXZ0GFDMDYG0=
 github.com/BrobridgeOrg/schemer v0.0.10 h1:e/Jwtt97t0kDp8Alw7hj3I+Jy8EEHNZqD7drmAWtO2k=
 github.com/BrobridgeOrg/schemer v0.0.10/go.mod h1:ymLlI5Ch8MsmFn3Ah+NphZkNz1NmCar5eUfxCcFTXI8=
 github.com/BrobridgeOrg/sequential-data-flow v0.0.2 h1:m5nQDQZOVVv2/EeUoycFVGWjJO7gvIRM1x/I6IWUxyI=
@@ -100,6 +100,8 @@ github.com/cespare/xxhash/v2 v2.1.1/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XL
 github.com/cespare/xxhash/v2 v2.1.2/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
 github.com/cfsghost/buffered-input v0.0.2 h1:YbaOfF4qO5ewSchlu2PR9uqbSomJIvdR/sdevttj3Hw=
 github.com/cfsghost/buffered-input v0.0.2/go.mod h1:exSfS6NGk+mSz/H2T1El3WZ7H8Fl93n4GiBix16PW34=
+github.com/cfsghost/buffered-input v0.0.3 h1:sdCJjMsT7yEj6BuYF1ZeuU+zonjoIgUMI7+/zqdXIL4=
+github.com/cfsghost/buffered-input v0.0.3/go.mod h1:N3bgfUk3CqMgc+yVPCe2/1ZCH6b7sSwYcJj2qMwV6bU=
 github.com/cfsghost/parallel-chunked-flow v0.0.6/go.mod h1:CfIVIBt1wN8w712B/6dsvwUn4ZJ+z9XSwj6Jmq74AqI=
 github.com/chzyer/logex v1.1.10/go.mod h1:+Ywpsq7O8HXn0nuIou7OrIPyXbp3wmkHB+jjWRnGsAI=
 github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e/go.mod h1:nSuG5e5PlCu98SY8svDHJxuZscDgtXS6KTTbou5AhLI=

@@ -1,6 +1,6 @@
 package system
 
-import "github.com/BrobridgeOrg/gravity-sdk/core"
+import "github.com/BrobridgeOrg/gravity-sdk/v2/core"
 
 type ErrorRPCState struct {
 	core.ErrorReply

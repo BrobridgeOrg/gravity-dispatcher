@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/BrobridgeOrg/gravity-dispatcher/pkg/connector"
-	"github.com/BrobridgeOrg/gravity-sdk/core"
+	"github.com/BrobridgeOrg/gravity-sdk/v2/core"
 	"go.uber.org/zap"
 )
 

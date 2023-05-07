@@ -7,7 +7,7 @@ import (
 
 	"github.com/BrobridgeOrg/gravity-dispatcher/pkg/connector"
 	"github.com/BrobridgeOrg/gravity-dispatcher/pkg/dispatcher/rule_manager"
-	product_sdk "github.com/BrobridgeOrg/gravity-sdk/product"
+	product_sdk "github.com/BrobridgeOrg/gravity-sdk/v2/product"
 	"github.com/BrobridgeOrg/schemer"
 	buffered_input "github.com/cfsghost/buffered-input"
 	"github.com/google/uuid"

@@ -6,7 +6,7 @@ import (
 
 	record_type "github.com/BrobridgeOrg/compton/types/record"
 	"github.com/BrobridgeOrg/gravity-dispatcher/pkg/dispatcher/converter"
-	gravity_sdk_types_product_event "github.com/BrobridgeOrg/gravity-sdk/types/product_event"
+	gravity_sdk_types_product_event "github.com/BrobridgeOrg/gravity-sdk/v2/types/product_event"
 	sdf "github.com/BrobridgeOrg/sequential-data-flow"
 	"github.com/lithammer/go-jump-consistent-hash"
 	"github.com/nats-io/nats.go"
@@ -179,20 +179,20 @@ func (p *Processor) checkRule(msg *Message) bool {
 /*
 func (p *Processor) calculatePrimaryKey(msg *Message) {
 
-	// Getting normalized product_event from map object
-	product_event := msg.Rule.Schema.Scan(msg.Data.Payload)
+		// Getting normalized product_event from map object
+		product_event := msg.Rule.Schema.Scan(msg.Data.Payload)
 
-	// Collect values from fields to calculate primary key
-	primaryKeys := make([]string, len(msg.Rule.PrimaryKey))
-	for i, pk := range msg.Rule.PrimaryKey {
-		v := product_event.GetValue(pk)
-		primaryKeys[i] = fmt.Sprintf("%v", v.Data)
+		// Collect values from fields to calculate primary key
+		primaryKeys := make([]string, len(msg.Rule.PrimaryKey))
+		for i, pk := range msg.Rule.PrimaryKey {
+			v := product_event.GetValue(pk)
+			primaryKeys[i] = fmt.Sprintf("%v", v.Data)
+		}
+
+		// Merge all values
+		pk := strings.Join(primaryKeys, "-")
+		msg.Data.PrimaryKey = StrToBytes(pk)
 	}
-
-	// Merge all values
-	pk := strings.Join(primaryKeys, "-")
-	msg.Data.PrimaryKey = StrToBytes(pk)
-}
 */
 func (p *Processor) calculatePartition(msg *Message) {
 	msg.Partition = jump.HashString(string(msg.ProductEvent.PrimaryKey), 256, jump.NewCRC64())

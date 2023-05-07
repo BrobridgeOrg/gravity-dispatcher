@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	record_type "github.com/BrobridgeOrg/compton/types/record"
-	product_sdk "github.com/BrobridgeOrg/gravity-sdk/product"
+	product_sdk "github.com/BrobridgeOrg/gravity-sdk/v2/product"
 	"github.com/d5/tengo/assert"
 	"go.uber.org/zap"
 )

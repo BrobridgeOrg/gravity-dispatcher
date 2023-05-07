@@ -1,7 +1,7 @@
 package rule_manager
 
 import (
-	product_sdk "github.com/BrobridgeOrg/gravity-sdk/product"
+	product_sdk "github.com/BrobridgeOrg/gravity-sdk/v2/product"
 	"github.com/BrobridgeOrg/schemer"
 )
 

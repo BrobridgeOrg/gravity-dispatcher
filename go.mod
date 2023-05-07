@@ -4,10 +4,10 @@ go 1.15
 
 require (
 	github.com/BrobridgeOrg/compton v0.0.0-20220617174904-7083c8a5102d
-	github.com/BrobridgeOrg/gravity-sdk v0.0.51-0.20220927071456-6af137a2b5d9
+	github.com/BrobridgeOrg/gravity-sdk/v2 v2.0.2
 	github.com/BrobridgeOrg/schemer v0.0.10
 	github.com/BrobridgeOrg/sequential-data-flow v0.0.2
-	github.com/cfsghost/buffered-input v0.0.2
+	github.com/cfsghost/buffered-input v0.0.3
 	github.com/d5/tengo v1.24.8
 	github.com/dop251/goja v0.0.0-20220214123719-b09a6bfa842f // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible
@@ -28,6 +28,6 @@ require (
 	gopkg.in/ini.v1 v1.66.4 // indirect
 )
 
-// replace github.com/BrobridgeOrg/gravity-sdk => ../gravity-sdk
+//replace github.com/BrobridgeOrg/gravity-sdk/v2 => ../gravity-sdk
 
 // replace github.com/BrobridgeOrg/compton => ../../compton

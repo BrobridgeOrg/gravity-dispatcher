@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	"github.com/BrobridgeOrg/gravity-dispatcher/pkg/dispatcher/rule_manager"
-	gravity_sdk_types_product_event "github.com/BrobridgeOrg/gravity-sdk/types/product_event"
+	gravity_sdk_types_product_event "github.com/BrobridgeOrg/gravity-sdk/v2/types/product_event"
 	"github.com/BrobridgeOrg/schemer"
 
 	"github.com/nats-io/nats.go"
