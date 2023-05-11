@@ -127,7 +127,7 @@ func (ew *EventWatcher) Init() error {
 			return err
 		}
 
-		logger.Warn("stream not found",
+		logger.Warn("event stream not found",
 			zap.String("stream", streamName),
 		)
 	}
@@ -142,6 +142,7 @@ func (ew *EventWatcher) Init() error {
 			zap.String("subject", subject),
 		)
 
+		//TODO: set more than one replicas if jetstream cluster exists
 		_, err := js.AddStream(&nats.StreamConfig{
 			Name:        streamName,
 			Description: "Gravity domain event store",
@@ -168,6 +169,59 @@ func (ew *EventWatcher) Init() error {
 	return nil
 }
 
+func (ew *EventWatcher) AssertConsumer() (*nats.ConsumerInfo, error) {
+
+	// Preparing JetStream
+	js, err := ew.client.GetJetStream()
+	if err != nil {
+		return nil, err
+	}
+
+	streamName := fmt.Sprintf(domainStream, ew.domain)
+
+	logger.Info("Checking consumer",
+		zap.String("stream", streamName),
+		zap.String("consumer", ew.durable),
+	)
+
+	c, err := js.ConsumerInfo(streamName, ew.durable)
+	if err != nil {
+		if err != nats.ErrConsumerNotFound {
+			return nil, err
+		}
+
+		subject := fmt.Sprintf(domainEventSubject, ew.domain, ">")
+
+		logger.Info("Creating a new consumer...",
+			zap.String("stream", streamName),
+			zap.String("subject", subject),
+		)
+
+		cfg := nats.ConsumerConfig{
+			Durable:        ew.durable,
+			DeliverSubject: nats.NewInbox(),
+			FilterSubject:  subject,
+			AckPolicy:      nats.AckAllPolicy,
+			DeliverPolicy:  nats.DeliverAllPolicy,
+			MaxAckPending:  20480,
+		}
+
+		c, err := js.AddConsumer(streamName, &cfg)
+		if err != nil {
+			return c, err
+		}
+
+		return c, nil
+	}
+
+	logger.Info("Consumer exists already",
+		zap.String("stream", streamName),
+		zap.String("consumer", ew.durable),
+	)
+
+	return c, nil
+}
+
 func (ew *EventWatcher) Watch(fn func(string, *nats.Msg)) error {
 
 	// Watching already
@@ -183,15 +237,25 @@ func (ew *EventWatcher) Watch(fn func(string, *nats.Msg)) error {
 		return err
 	}
 
-	subject := fmt.Sprintf(domainEventSubject, ew.domain, "*")
+	// Initializing consumer
+	_, err = ew.AssertConsumer()
+	if err != nil {
+		return err
+	}
+
+	subject := fmt.Sprintf(domainEventSubject, ew.domain, ">")
 
 	logger.Info("Waiting events...",
 		zap.String("subject", subject),
+		zap.String("dueable", ew.durable),
 	)
 	//sub, err := js.PullSubscribe(subject, "DISPATCH", nats.PullMaxWaiting(128), nats.AckExplicit())
 
 	//	count := 0
 	sub, err := js.Subscribe(subject, func(msg *nats.Msg) {
+		logger.Info("Received event",
+			zap.String("subject", msg.Subject),
+		)
 		/*
 			count++
 			logger.Info("msg",
@@ -209,8 +273,10 @@ func (ew *EventWatcher) Watch(fn func(string, *nats.Msg)) error {
 
 		//}, nats.DeliverNew(), nats.AckAll(), nats.Durable(ew.durable), nats.OrderedConsumer())
 		//}, nats.OrderedConsumer())
-	}, nats.MaxAckPending(20480), nats.AckAll(), nats.Durable(ew.durable))
+		//}, nats.MaxAckPending(20480), nats.AckAll(), nats.Durable(ew.durable))
+	}, nats.Durable(ew.durable))
 	if err != nil {
+		logger.Error(err.Error())
 		return err
 	}
 
@@ -228,5 +294,8 @@ func (ew *EventWatcher) Stop() error {
 		return nil
 	}
 
-	return ew.sub.Unsubscribe()
+	sub := ew.sub
+	ew.sub = nil
+
+	return sub.Unsubscribe()
 }

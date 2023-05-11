@@ -59,13 +59,21 @@ func (pm *ProductManager) assertProductStream(name string, streamName string) er
 	// Check if the stream already exists
 	stream, err := js.StreamInfo(streamName)
 	if err != nil {
-		logger.Warn(err.Error())
+		if err != nats.ErrStreamNotFound {
+			return err
+
+		}
+
+		logger.Warn("Product stream is not ready",
+			zap.String("product", name),
+			zap.String("stream", streamName),
+		)
 	}
 
-	// Event subject
-	subject := fmt.Sprintf(productEventSubject, pm.dispatcher.connector.GetDomain(), name)
-
 	if stream == nil {
+
+		// Event subject
+		subject := fmt.Sprintf(productEventSubject, pm.dispatcher.connector.GetDomain(), name)
 
 		// Initializing stream
 		logger.Info("Creating a new product stream...",
@@ -74,6 +82,7 @@ func (pm *ProductManager) assertProductStream(name string, streamName string) er
 			zap.String("subject", subject),
 		)
 
+		//TODO: set more than one replicas if jetstream cluster exists
 		_, err := js.AddStream(&nats.StreamConfig{
 			Name:        streamName,
 			Description: "Gravity product event store",

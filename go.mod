@@ -4,7 +4,7 @@ go 1.15
 
 require (
 	github.com/BrobridgeOrg/compton v0.0.0-20220617174904-7083c8a5102d
-	github.com/BrobridgeOrg/gravity-sdk/v2 v2.0.2
+	github.com/BrobridgeOrg/gravity-sdk/v2 v2.0.3
 	github.com/BrobridgeOrg/schemer v0.0.10
 	github.com/BrobridgeOrg/sequential-data-flow v0.0.2
 	github.com/cfsghost/buffered-input v0.0.3
@@ -15,7 +15,7 @@ require (
 	github.com/json-iterator/go v1.1.12
 	github.com/lithammer/go-jump-consistent-hash v1.0.2
 	github.com/magiconair/properties v1.8.6 // indirect
-	github.com/nats-io/nats.go v1.16.0
+	github.com/nats-io/nats.go v1.25.0
 	github.com/spf13/afero v1.8.1 // indirect
 	github.com/spf13/cobra v1.3.0
 	github.com/spf13/viper v1.10.1
@@ -23,8 +23,6 @@ require (
 	go.uber.org/fx v1.17.0
 	go.uber.org/multierr v1.8.0 // indirect
 	go.uber.org/zap v1.21.0
-	golang.org/x/crypto v0.0.0-20220307211146-efcb8507fb70 // indirect
-	golang.org/x/sys v0.0.0-20220307203707-22a9840ba4d7 // indirect
 	gopkg.in/ini.v1 v1.66.4 // indirect
 )
 
