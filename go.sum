@@ -53,8 +53,8 @@ github.com/AndreasBriese/bbloom v0.0.0-20190306092124-e2d15f34fcf9/go.mod h1:bOv
 github.com/BrobridgeOrg/compton v0.0.0-20220315055918-5c0ee958b7d2/go.mod h1:BIpXs8Ch8yH9ruVK/QI36Vin1wWkut7J81K9dk92S20=
 github.com/BrobridgeOrg/compton v0.0.0-20220617174904-7083c8a5102d h1:4AkkcvBq3oR9A88IK9z72Ok+7OARqd4u/GTdCBDQPZ8=
 github.com/BrobridgeOrg/compton v0.0.0-20220617174904-7083c8a5102d/go.mod h1:BIpXs8Ch8yH9ruVK/QI36Vin1wWkut7J81K9dk92S20=
-github.com/BrobridgeOrg/gravity-sdk/v2 v2.0.2 h1:jpvq5Eg7Z3CsCrCxPUgIDBkXCH0/LaqdC84OoZ2LiOc=
-github.com/BrobridgeOrg/gravity-sdk/v2 v2.0.2/go.mod h1:sQ0KBp/ek+IdFxuteRBRApf6IFeA2HcsXZ0GFDMDYG0=
+github.com/BrobridgeOrg/gravity-sdk/v2 v2.0.3 h1:JOJ9R0y10gbG8qj3bxN5z1nWcvf0zt/qRI+oz/j7HF0=
+github.com/BrobridgeOrg/gravity-sdk/v2 v2.0.3/go.mod h1:Du+GAOV77AqCYH96vUIYVggJ4XWLFvDFBvgNu/4nv/A=
 github.com/BrobridgeOrg/schemer v0.0.10 h1:e/Jwtt97t0kDp8Alw7hj3I+Jy8EEHNZqD7drmAWtO2k=
 github.com/BrobridgeOrg/schemer v0.0.10/go.mod h1:ymLlI5Ch8MsmFn3Ah+NphZkNz1NmCar5eUfxCcFTXI8=
 github.com/BrobridgeOrg/sequential-data-flow v0.0.2 h1:m5nQDQZOVVv2/EeUoycFVGWjJO7gvIRM1x/I6IWUxyI=
@@ -792,7 +792,6 @@ golang.org/x/sys v0.0.0-20211124211545-fe61309f8881/go.mod h1:oPkhp1MJrh7nUepCBc
 golang.org/x/sys v0.0.0-20211205182925-97ca703d548d/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/sys v0.0.0-20211210111614-af8b64212486/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/sys v0.0.0-20220111092808-5a964db01320/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
-golang.org/x/sys v0.0.0-20220114195835-da31bd327af9/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/sys v0.0.0-20220520151302-bc2c85ada10a/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/sys v0.0.0-20220722155257-8c9f86f7a55f/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/sys v0.5.0 h1:MUK/U/4lj1t1oPg0HfuXDN/Z1wv31ZJ/YcPiGccS4DU=
