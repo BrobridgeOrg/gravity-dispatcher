@@ -1,6 +1,7 @@
 package converter
 
 import (
+	"encoding/base64"
 	"fmt"
 	"reflect"
 
@@ -24,6 +25,17 @@ var (
 )
 
 func getValue(t schemer.ValueType, data interface{}) (*record_type.Value, error) {
+
+	if t == schemer.TYPE_BINARY {
+		// Convert base64 (from json) string to binary
+		bytes, err := base64.StdEncoding.DecodeString(data.(string))
+		if err != nil {
+			return nil, err
+		}
+
+		return record_type.CreateValue(RecordTypes[t], bytes)
+	}
+
 	return record_type.CreateValue(RecordTypes[t], data)
 }
 
