@@ -27,13 +27,15 @@ var (
 func getValue(t schemer.ValueType, data interface{}) (*record_type.Value, error) {
 
 	if t == schemer.TYPE_BINARY {
-		// Convert base64 (from json) string to binary
-		bytes, err := base64.StdEncoding.DecodeString(data.(string))
-		if err != nil {
-			return nil, err
-		}
+		if dataBytes, ok := data.([]uint8); ok {
+			// Convert base64 (from json) string to binary
+			bytes, err := base64.StdEncoding.DecodeString(string(dataBytes))
+			if err != nil {
+				return nil, err
+			}
 
-		return record_type.CreateValue(RecordTypes[t], bytes)
+			return record_type.CreateValue(RecordTypes[t], bytes)
+		}
 	}
 
 	return record_type.CreateValue(RecordTypes[t], data)
