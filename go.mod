@@ -5,7 +5,7 @@ go 1.15
 require (
 	github.com/BrobridgeOrg/compton v0.0.0-20220617174904-7083c8a5102d
 	github.com/BrobridgeOrg/gravity-sdk/v2 v2.0.3
-	github.com/BrobridgeOrg/schemer v0.0.10
+	github.com/BrobridgeOrg/schemer v0.0.13
 	github.com/BrobridgeOrg/sequential-data-flow v0.0.2
 	github.com/cfsghost/buffered-input v0.0.3
 	github.com/d5/tengo v1.24.8
