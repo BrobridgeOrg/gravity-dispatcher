@@ -3,8 +3,8 @@ module github.com/BrobridgeOrg/gravity-dispatcher
 go 1.15
 
 require (
-	github.com/BrobridgeOrg/compton v0.0.0-20220617174904-7083c8a5102d
-	github.com/BrobridgeOrg/gravity-sdk/v2 v2.0.3
+	github.com/BrobridgeOrg/compton v0.0.0-20230706054144-85a7822eb14e
+	github.com/BrobridgeOrg/gravity-sdk/v2 v2.0.5
 	github.com/BrobridgeOrg/schemer v0.0.13
 	github.com/BrobridgeOrg/sequential-data-flow v0.0.2
 	github.com/cfsghost/buffered-input v0.0.3
@@ -26,6 +26,6 @@ require (
 	gopkg.in/ini.v1 v1.66.4 // indirect
 )
 
-//replace github.com/BrobridgeOrg/gravity-sdk/v2 => ../gravity-sdk
+// replace github.com/BrobridgeOrg/gravity-sdk/v2 => ../gravity-sdk
 
 // replace github.com/BrobridgeOrg/compton => ../../compton

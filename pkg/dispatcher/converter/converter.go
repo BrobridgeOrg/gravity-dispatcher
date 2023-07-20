@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"reflect"
 
-	record_type "github.com/BrobridgeOrg/compton/types/record"
+	record_type "github.com/BrobridgeOrg/gravity-sdk/v2/types/record"
 	"github.com/BrobridgeOrg/schemer"
 )
 

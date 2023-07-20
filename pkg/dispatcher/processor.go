@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"sync"
 
-	record_type "github.com/BrobridgeOrg/compton/types/record"
 	"github.com/BrobridgeOrg/gravity-dispatcher/pkg/dispatcher/converter"
 	gravity_sdk_types_product_event "github.com/BrobridgeOrg/gravity-sdk/v2/types/product_event"
+	record_type "github.com/BrobridgeOrg/gravity-sdk/v2/types/record"
 	sdf "github.com/BrobridgeOrg/sequential-data-flow"
 	"github.com/lithammer/go-jump-consistent-hash"
 	"github.com/nats-io/nats.go"
