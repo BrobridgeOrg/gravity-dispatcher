@@ -125,6 +125,11 @@ func (prpc *ProductRPC) create(ctx *RPCContext) {
 		return
 	}
 
+	if len(req.Setting.Stream) == 0 {
+		resp.Error = BadRequestErr()
+		return
+	}
+
 	// Create a new product
 	setting, err := prpc.productManager.CreateProduct(req.Setting)
 	if err != nil {
@@ -248,6 +253,7 @@ func (prpc *ProductRPC) info(ctx *RPCContext) {
 	// Getting product state
 	state, err := prpc.productManager.GetProductState(setting)
 	if err != nil {
+		ctx.Res.Error = err
 		resp.Error = InternalServerErr()
 		return
 	}
