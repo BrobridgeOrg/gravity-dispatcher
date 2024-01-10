@@ -262,7 +262,7 @@ func (pm *ProductManager) PrepareSubscription(productName string, durable string
 		DeliverSubject: nats.NewInbox(),
 		FilterSubject:  subject,
 		AckPolicy:      nats.AckAllPolicy,
-		MaxAckPending:  20000,
+		MaxAckPending:  2000,
 		MaxDeliver:     -1,
 		ReplayPolicy:   nats.ReplayInstantPolicy,
 	}
