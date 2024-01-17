@@ -4,8 +4,8 @@ import (
 	"sync"
 	"testing"
 
-	record_type "github.com/BrobridgeOrg/compton/types/record"
 	product_sdk "github.com/BrobridgeOrg/gravity-sdk/v2/product"
+	record_type "github.com/BrobridgeOrg/gravity-sdk/v2/types/record"
 	"github.com/d5/tengo/assert"
 	"go.uber.org/zap"
 )
