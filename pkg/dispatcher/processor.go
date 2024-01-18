@@ -44,7 +44,7 @@ func NewProcessor(opts ...func(*Processor)) *Processor {
 
 	// Initialize sequential data flow
 	options := sdf.NewOptions()
-	options.BufferSize = 20480
+	options.BufferSize = 2048
 	options.Handler = func(data interface{}, output func(interface{})) {
 		p.handle(data.(*Message), output)
 	}
