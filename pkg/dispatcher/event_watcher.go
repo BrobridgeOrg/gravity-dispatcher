@@ -2,6 +2,7 @@ package dispatcher
 
 import (
 	"fmt"
+	"time"
 
 	"go.uber.org/zap"
 
@@ -50,6 +51,7 @@ type EventWatcher struct {
 	durable string
 	events  map[string]*Event
 	sub     *nats.Subscription
+	running bool
 }
 
 func NewEventWatcher(client *core.Client, domain string, durable string) *EventWatcher {
@@ -58,6 +60,7 @@ func NewEventWatcher(client *core.Client, domain string, durable string) *EventW
 		domain:  domain,
 		durable: durable,
 		events:  make(map[string]*Event),
+		running: false,
 	}
 }
 
@@ -198,12 +201,11 @@ func (ew *EventWatcher) AssertConsumer() (*nats.ConsumerInfo, error) {
 		)
 
 		cfg := nats.ConsumerConfig{
-			Durable:        ew.durable,
-			DeliverSubject: nats.NewInbox(),
-			FilterSubject:  subject,
-			AckPolicy:      nats.AckAllPolicy,
-			DeliverPolicy:  nats.DeliverAllPolicy,
-			MaxAckPending:  20480,
+			Durable: ew.durable,
+			//			DeliverSubject: nats.NewInbox(),
+			FilterSubject: subject,
+			AckPolicy:     nats.AckAllPolicy,
+			//			MaxAckPending: 2048,
 		}
 
 		c, err := js.AddConsumer(streamName, &cfg)
@@ -222,6 +224,62 @@ func (ew *EventWatcher) AssertConsumer() (*nats.ConsumerInfo, error) {
 	return c, nil
 }
 
+func (ew *EventWatcher) subscribe(subject string, fn func(string, *nats.Msg)) error {
+
+	// Preparing JetStream
+	js, err := ew.client.GetJetStream()
+	if err != nil {
+		return err
+	}
+
+	sub, err := js.PullSubscribe(subject, ew.durable)
+	if err != nil {
+		return err
+	}
+
+	sub.SetPendingLimits(-1, -1)
+	ew.client.GetConnection().Flush()
+
+	ew.sub = sub
+	ew.running = true
+
+	go func() {
+
+		logger.Info("Waiting events...",
+			zap.String("subject", subject),
+			zap.String("dueable", ew.durable),
+		)
+
+		for ew.running {
+			msgs, err := sub.Fetch(512, nats.MaxWait(time.Second))
+			if err != nil {
+
+				if err == nats.ErrTimeout {
+					continue
+				}
+
+				logger.Error(err.Error())
+			}
+
+			fmt.Printf("received %d msg(s)", len(msgs))
+
+			for _, msg := range msgs {
+
+				// Ignore event
+				e, ok := ew.events[msg.Subject]
+				if !ok {
+					fn("", msg)
+					return
+				}
+
+				fn(e.Name, msg)
+			}
+		}
+	}()
+
+	return nil
+}
+
 func (ew *EventWatcher) Watch(fn func(string, *nats.Msg)) error {
 
 	// Watching already
@@ -230,65 +288,63 @@ func (ew *EventWatcher) Watch(fn func(string, *nats.Msg)) error {
 	}
 
 	logger.Info("Start watching for events...")
-
-	// Preparing JetStream
-	js, err := ew.client.GetJetStream()
-	if err != nil {
-		return err
-	}
-
+	/*
+		// Preparing JetStream
+		js, err := ew.client.GetJetStream()
+		if err != nil {
+			return err
+		}
+	*/
 	// Initializing consumer
-	_, err = ew.AssertConsumer()
+	_, err := ew.AssertConsumer()
 	if err != nil {
 		return err
 	}
 
 	subject := fmt.Sprintf(domainEventSubject, ew.domain, ">")
 
-	logger.Info("Waiting events...",
-		zap.String("subject", subject),
-		zap.String("dueable", ew.durable),
-	)
-	//sub, err := js.PullSubscribe(subject, "DISPATCH", nats.PullMaxWaiting(128), nats.AckExplicit())
-
-	//	count := 0
-	sub, err := js.Subscribe(subject, func(msg *nats.Msg) {
-		logger.Info("Received event",
-			zap.String("subject", msg.Subject),
-		)
-		/*
-			count++
-			logger.Info("msg",
-				zap.Int("count", count),
-			)
-		*/
-		// Ignore event
-		e, ok := ew.events[msg.Subject]
-		if !ok {
-			fn("", msg)
-			return
-		}
-
-		fn(e.Name, msg)
-
-		//}, nats.DeliverNew(), nats.AckAll(), nats.Durable(ew.durable), nats.OrderedConsumer())
-		//}, nats.OrderedConsumer())
-		//}, nats.MaxAckPending(20480), nats.AckAll(), nats.Durable(ew.durable))
-	}, nats.Durable(ew.durable))
+	err = ew.subscribe(subject, fn)
 	if err != nil {
 		logger.Error(err.Error())
 		return err
 	}
+	/*
+		//sub, err := js.PullSubscribe(subject, "DISPATCH", nats.PullMaxWaiting(128), nats.AckExplicit())
 
-	sub.SetPendingLimits(-1, -1)
-	ew.client.GetConnection().Flush()
+		sub, err := js.Subscribe(subject, func(msg *nats.Msg) {
+			logger.Info("Received event",
+				zap.String("subject", msg.Subject),
+			)
 
-	ew.sub = sub
+			// Ignore event
+			e, ok := ew.events[msg.Subject]
+			if !ok {
+				fn("", msg)
+				return
+			}
+
+			fn(e.Name, msg)
+
+			//}, nats.DeliverNew(), nats.AckAll(), nats.Durable(ew.durable), nats.OrderedConsumer())
+			//}, nats.OrderedConsumer())
+			//}, nats.MaxAckPending(20480), nats.AckAll(), nats.Durable(ew.durable))
+		}, nats.Durable(ew.durable))
+		if err != nil {
+			logger.Error(err.Error())
+			return err
+		}
+	*/
 
 	return nil
 }
 
 func (ew *EventWatcher) Stop() error {
+
+	if !ew.running {
+		return nil
+	}
+
+	ew.running = false
 
 	if ew.sub == nil {
 		return nil

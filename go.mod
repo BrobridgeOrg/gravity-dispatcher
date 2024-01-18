@@ -3,7 +3,6 @@ module github.com/BrobridgeOrg/gravity-dispatcher
 go 1.15
 
 require (
-	github.com/BrobridgeOrg/compton v0.0.0-20230706054144-85a7822eb14e
 	github.com/BrobridgeOrg/gravity-sdk/v2 v2.0.5
 	github.com/BrobridgeOrg/schemer v0.0.13
 	github.com/BrobridgeOrg/sequential-data-flow v0.0.2
