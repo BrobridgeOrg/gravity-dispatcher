@@ -9,7 +9,8 @@ import (
 )
 
 type Config struct {
-	Events []string
+	Replicas int
+	Events   []string
 }
 
 func GetConfig() *Config {

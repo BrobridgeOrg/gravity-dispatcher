@@ -149,9 +149,11 @@ func (ew *EventWatcher) Init() error {
 		_, err := js.AddStream(&nats.StreamConfig{
 			Name:        streamName,
 			Description: "Gravity domain event store",
+			Duplicates:  30 * time.Minute,
 			Subjects: []string{
 				subject,
 			},
+			Replicas: 1,
 			//			Retention: nats.InterestPolicy,
 		})
 
@@ -261,7 +263,10 @@ func (ew *EventWatcher) subscribe(subject string, fn func(string, *nats.Msg)) er
 				logger.Error(err.Error())
 			}
 
-			fmt.Printf("received %d msg(s)", len(msgs))
+			logger.Info("received messages",
+				zap.String("subject", subject),
+				zap.Int("count", len(msgs)),
+			)
 
 			for _, msg := range msgs {
 

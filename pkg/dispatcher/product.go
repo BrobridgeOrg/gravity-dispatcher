@@ -82,18 +82,25 @@ func (pm *ProductManager) assertProductStream(name string, streamName string) er
 			zap.String("subject", subject),
 		)
 
-		//TODO: set more than one replicas if jetstream cluster exists
-		_, err := js.AddStream(&nats.StreamConfig{
+		sc := &nats.StreamConfig{
 			Name:        streamName,
 			Description: "Gravity product event store",
 			Subjects: []string{
 				subject,
 			},
 			Retention: nats.LimitsPolicy,
-		})
+			Replicas:  3,
+		}
 
+		_, err := js.AddStream(sc)
 		if err != nil {
-			return err
+
+			// for single node
+			sc.Replicas = 1
+			_, err := js.AddStream(sc)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
