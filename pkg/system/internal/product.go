@@ -257,14 +257,14 @@ func (pm *ProductManager) PrepareSubscription(productName string, durable string
 	// Preparing push consumer
 	subject := fmt.Sprintf(productEventSubject, pm.domain, productName, "*")
 	cfg := &nats.ConsumerConfig{
-		Durable:        durable,
-		Description:    "Product Subscription",
-		DeliverSubject: nats.NewInbox(),
-		FilterSubject:  subject,
-		AckPolicy:      nats.AckAllPolicy,
-		MaxAckPending:  2000,
-		MaxDeliver:     -1,
-		ReplayPolicy:   nats.ReplayInstantPolicy,
+		Durable:       durable,
+		Description:   "Product Subscription",
+		FilterSubject: subject,
+		AckPolicy:     nats.AckExplicitPolicy,
+		MaxAckPending: 2000,
+		ReplayPolicy:  nats.ReplayInstantPolicy,
+		//DeliverSubject: nats.NewInbox(),
+		//MaxDeliver:     -1,
 	}
 
 	if startSeq > 0 {
