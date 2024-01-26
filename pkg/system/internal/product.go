@@ -264,7 +264,8 @@ func (pm *ProductManager) PrepareSubscription(productName string, durable string
 		MaxAckPending: 2000,
 		ReplayPolicy:  nats.ReplayInstantPolicy,
 		//DeliverSubject: nats.NewInbox(),
-		//MaxDeliver:     -1,
+		MaxDeliver: 1,
+		MaxWaiting: 2000,
 	}
 
 	if startSeq > 0 {
