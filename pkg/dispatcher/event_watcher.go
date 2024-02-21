@@ -249,10 +249,11 @@ func (ew *EventWatcher) subscribe(subject string, fn func(string, *nats.Msg)) er
 
 		logger.Info("Waiting events...",
 			zap.String("subject", subject),
-			zap.String("dueable", ew.durable),
+			zap.String("durable", ew.durable),
 		)
 
 		for ew.running {
+
 			msgs, err := sub.Fetch(512, nats.MaxWait(time.Second))
 			if err != nil {
 
@@ -265,6 +266,7 @@ func (ew *EventWatcher) subscribe(subject string, fn func(string, *nats.Msg)) er
 
 			logger.Info("received messages",
 				zap.String("subject", subject),
+				zap.String("durable", ew.durable),
 				zap.Int("count", len(msgs)),
 			)
 
@@ -274,7 +276,7 @@ func (ew *EventWatcher) subscribe(subject string, fn func(string, *nats.Msg)) er
 				e, ok := ew.events[msg.Subject]
 				if !ok {
 					fn("", msg)
-					return
+					continue
 				}
 
 				fn(e.Name, msg)
