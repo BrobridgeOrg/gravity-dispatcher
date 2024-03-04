@@ -133,6 +133,9 @@ func (p *Processor) handle(msg *Message, output func(interface{})) {
 		header = msg.Msg.Header
 	}
 
+	// Calculate partion based on primary key
+	p.calculatePartition(msg)
+
 	// Output subject
 	subject := fmt.Sprintf("$GVT.%s.DP.%s.%d.EVENT.%s",
 		p.domain,
@@ -153,9 +156,6 @@ func (p *Processor) handle(msg *Message, output func(interface{})) {
 			Header:  header,
 		}
 	*/
-
-	// Calculate partion based on primary key
-	p.calculatePartition(msg)
 
 	output(msg)
 }
