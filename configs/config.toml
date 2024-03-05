@@ -1,0 +1,8 @@
+[gravity]
+domain = "default"
+accessKey = ""
+host = "192.168.8.227"
+port = 4222
+pingInterval = 10
+maxPingsOutstanding = 3
+maxReconnects = -1
