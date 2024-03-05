@@ -57,6 +57,9 @@ func (tm *TokenManager) CreateToken(t string, tokenSetting *token.TokenSetting) 
 
 	tokenSetting.CreatedAt = time.Now()
 	tokenSetting.UpdatedAt = time.Now()
+	tokenSetting.Subscription = &token.SubscriptionInfo{
+		Subscriptions: make(map[string]string),
+	}
 
 	data, _ := json.Marshal(tokenSetting)
 
@@ -138,6 +141,12 @@ func (tm *TokenManager) GetToken(t string) (*token.TokenSetting, error) {
 	err = json.Unmarshal(kv.Value(), &tokenSetting)
 	if err != nil {
 		return nil, err
+	}
+
+	if tokenSetting.Subscription == nil {
+		tokenSetting.Subscription = &token.SubscriptionInfo{
+			Subscriptions: make(map[string]string),
+		}
 	}
 
 	return &tokenSetting, nil

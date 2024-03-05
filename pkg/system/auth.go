@@ -134,7 +134,7 @@ func RequiredPermissions(permissions ...string) RPCHandler {
 		ctx.Req.Header["tokenInfo"] = tokenInfo
 
 		// Pass directly for administrator permission
-		if _, ok := tokenInfo.Permissions["ADMIN"]; ok {
+		if tokenInfo.CheckPermission("ADMIN") {
 			return
 		}
 

@@ -8,16 +8,19 @@ import (
 	internal "github.com/BrobridgeOrg/gravity-dispatcher/pkg/system/internal"
 	"github.com/BrobridgeOrg/gravity-sdk/v2/core"
 	"github.com/BrobridgeOrg/gravity-sdk/v2/product"
+	"github.com/BrobridgeOrg/gravity-sdk/v2/subscription"
 	"github.com/BrobridgeOrg/gravity-sdk/v2/token"
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
 type ProductRPC struct {
 	RPC
 
-	system         *System
-	connector      *connector.Connector
-	productManager *internal.ProductManager
+	system              *System
+	connector           *connector.Connector
+	productManager      *internal.ProductManager
+	subscriptionManager *internal.SubscriptionManager
 }
 
 func NewProductRPC(s *System) *ProductRPC {
@@ -42,15 +45,41 @@ func (prpc *ProductRPC) initialize() error {
 	)
 
 	if productManager == nil {
-		return errors.New("Failed to create product client")
+		return errors.New("Failed to create product manager")
 	}
 
 	prpc.productManager = productManager
 
-	// Initialize RPC handlers
+	// Initialize subscription manager
+	subscriptionManager := internal.NewSubscriptionManager(
+		prpc.connector.GetClient(),
+		prpc.connector.GetDomain(),
+	)
+
+	if subscriptionManager == nil {
+		return errors.New("Failed to create subscription manager")
+	}
+
+	prpc.subscriptionManager = subscriptionManager
+
+	err := prpc.initializeAdminRPC()
+	if err != nil {
+		return err
+	}
+
+	err = prpc.initializeRPC()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (prpc *ProductRPC) initializeAdminRPC() error {
+
 	prefix := fmt.Sprintf(product.ProductAPI, prpc.connector.GetDomain())
 
-	logger.Info("Initializing Product RPC",
+	logger.Info("Initializing Product Admin RPC",
 		zap.String("prefix", prefix),
 	)
 
@@ -63,6 +92,22 @@ func (prpc *ProductRPC) initialize() error {
 	route.Handle("INFO", RequiredPermissions("PRODUCT.INFO"), prpc.info)
 	route.Handle("PURGE", RequiredPermissions("PRODUCT.PURGE"), prpc.purge)
 	route.Handle("PREPARE_SUBSCRIPTION", RequiredPermissions("PRODUCT.SUBSCRIPTION"), prpc.prepareSubscription)
+
+	return nil
+}
+
+func (prpc *ProductRPC) initializeRPC() error {
+
+	prefix := fmt.Sprintf(product.ProductAPI, prpc.connector.GetDomain())
+
+	logger.Info("Initializing Product RPC",
+		zap.String("prefix", prefix),
+	)
+
+	route, _ := prpc.createRoute("general", prefix)
+	route.Use(RequiredAuth())
+	route.Handle("GET_SUBSCRIPTION", RequiredPermissions("PRODUCT.SUBSCRIPTION"), prpc.getSubscription)
+	route.Handle("DELETE_SUBSCRIPTION", RequiredPermissions("PRODUCT.SUBSCRIPTION"), prpc.deleteSubscription)
 
 	return nil
 }
@@ -312,6 +357,7 @@ func (prpc *ProductRPC) prepareSubscription(ctx *RPCContext) {
 
 	// Getting token information
 	if ctx.Req.Header["tokenInfo"] == nil {
+		resp.Error = ForbiddenErr()
 		return
 	}
 
@@ -319,8 +365,193 @@ func (prpc *ProductRPC) prepareSubscription(ctx *RPCContext) {
 
 	//TODO: Check permission
 
-	// Purge specific product
-	err = prpc.productManager.PrepareSubscription(req.Product, tokenInfo.ID, 0)
+	var s *subscription.SubscriptionSetting
+
+	subscriptionID, err := tokenInfo.GetSubscriptionByProduct(req.Product)
+	if err == token.ErrSubscriptionNotFound {
+
+		// Creating a subscription
+		subscriptionID = uuid.New().String()
+		s = subscription.NewSubscriptionSetting()
+		s.Product = req.Product
+		s.Consumers = req.Consumers
+
+		// Old client doesn't provide subscription parameter
+		if s.Consumers == nil {
+			s.Consumers = []*subscription.ConsumerSetting{
+				{
+					Name:         fmt.Sprintf("%s_default", subscriptionID),
+					Partitions:   []int{},
+					StartFromSeq: 0,
+				},
+			}
+		}
+
+		// Create subscription
+		_, err = prpc.subscriptionManager.CreateSubscription(subscriptionID, s)
+		if err != nil {
+			ctx.Res.Error = err
+			resp.Error = InternalServerErr()
+			return
+		}
+	} else {
+
+		// Getting existing subscription information
+		s, err = prpc.subscriptionManager.GetSubscription(subscriptionID)
+		if err != nil {
+			ctx.Res.Error = err
+			resp.Error = InternalServerErr()
+			return
+		}
+	}
+
+	/*
+		// preparing subscription
+		err = prpc.productManager.PrepareSubscription(req.Product, subscriptionID, 0)
+		if err != nil {
+			ctx.Res.Error = err
+			resp.Error = InternalServerErr()
+			return
+		}
+	*/
+
+	// Initializing consumers
+	for _, c := range s.Consumers {
+		consumerName := fmt.Sprintf("%s_%s", subscriptionID, c.Name)
+		err = prpc.productManager.InitConsumer(req.Product, consumerName, c.Partitions, c.StartFromSeq)
+		if err != nil {
+			ctx.Res.Error = err
+			resp.Error = InternalServerErr()
+			return
+		}
+	}
+
+}
+
+func (prpc *ProductRPC) getSubscription(ctx *RPCContext) {
+
+	// Prepare response message
+	resp := &product.GetSubscriptionReply{}
+	ctx.Res.Data = resp
+
+	// Parsing request
+	var req product.GetSubscriptionRequest
+	err := json.Unmarshal(ctx.Req.Data, &req)
+	if err != nil {
+		ctx.Res.Error = err
+		resp.Error = InternalServerErr()
+		return
+	}
+
+	// Getting token information
+	if ctx.Req.Header["tokenInfo"] == nil {
+		resp.Error = ForbiddenErr()
+		return
+	}
+
+	tokenInfo := ctx.Req.Header["tokenInfo"].(*token.TokenSetting)
+
+	if !tokenInfo.CheckPermission("ADMIN") {
+
+		subscriptionID, err := tokenInfo.GetSubscriptionByProduct(req.Product)
+		if err != nil {
+			resp.Error = &core.Error{
+				Code:    44404,
+				Message: "Subscription not found",
+			}
+			return
+		}
+
+		// Subscription of request is not empty
+		if len(req.Subscription) >= 0 && req.Subscription != subscriptionID {
+			resp.Error = &core.Error{
+				Code:    44404,
+				Message: "Subscription not found",
+			}
+			return
+		}
+
+		req.Subscription = subscriptionID
+	}
+
+	// Get subscription information
+	setting, err := prpc.subscriptionManager.GetSubscription(req.Subscription)
+	if err != nil {
+		ctx.Res.Error = err
+		resp.Error = InternalServerErr()
+		return
+	}
+
+	resp.Setting = setting
+}
+
+func (prpc *ProductRPC) deleteSubscription(ctx *RPCContext) {
+
+	// Prepare response message
+	resp := &product.DeleteSubscriptionReply{}
+	ctx.Res.Data = resp
+
+	// Parsing request
+	var req product.DeleteSubscriptionRequest
+	err := json.Unmarshal(ctx.Req.Data, &req)
+	if err != nil {
+		ctx.Res.Error = err
+		resp.Error = InternalServerErr()
+		return
+	}
+
+	// Getting token information
+	if ctx.Req.Header["tokenInfo"] == nil {
+		resp.Error = ForbiddenErr()
+		return
+	}
+
+	tokenInfo := ctx.Req.Header["tokenInfo"].(*token.TokenSetting)
+
+	if !tokenInfo.CheckPermission("ADMIN") {
+
+		subscriptionID, err := tokenInfo.GetSubscriptionByProduct(req.Product)
+		if err != nil {
+			resp.Error = &core.Error{
+				Code:    44404,
+				Message: "Subscription not found",
+			}
+			return
+		}
+
+		// Subscription of request is not empty
+		if len(req.Subscription) >= 0 && req.Subscription != subscriptionID {
+			resp.Error = &core.Error{
+				Code:    44404,
+				Message: "Subscription not found",
+			}
+			return
+		}
+
+		req.Subscription = subscriptionID
+	}
+
+	// Getting existing subscription information
+	s, err := prpc.subscriptionManager.GetSubscription(req.Subscription)
+	if err != nil {
+		ctx.Res.Error = err
+		resp.Error = InternalServerErr()
+		return
+	}
+
+	// Delete consumers
+	for _, c := range s.Consumers {
+		consumerName := fmt.Sprintf("%s_%s", req.Subscription, c.Name)
+		err = prpc.productManager.DeleteConsumer(req.Product, consumerName)
+		if err != nil {
+			ctx.Res.Error = err
+			resp.Error = InternalServerErr()
+			return
+		}
+	}
+
+	// Delete subscription
+	err = prpc.subscriptionManager.DeleteSubscription(req.Subscription)
 	if err != nil {
 		ctx.Res.Error = err
 		resp.Error = InternalServerErr()
