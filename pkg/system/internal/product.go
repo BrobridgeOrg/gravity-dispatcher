@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/BrobridgeOrg/gravity-sdk/v2/config_store"
@@ -229,7 +230,60 @@ func (pm *ProductManager) ListProducts() ([]*product.ProductSetting, error) {
 	return products, nil
 }
 
+/*
 func (pm *ProductManager) PrepareSubscription(productName string, durable string, startSeq uint64) error {
+
+		js, err := pm.client.GetJetStream()
+		if err != nil {
+			return err
+		}
+
+		// Check if the stream already exists
+		streamName := fmt.Sprintf(productEventStream, pm.domain, productName)
+		_, err = js.StreamInfo(streamName)
+		if err != nil {
+			return err
+		}
+
+		// Check wheter consumer exist or not
+		_, err = js.ConsumerInfo(streamName, streamName)
+		if err != nats.ErrConsumerNotFound {
+			return err
+		}
+
+		// The consumer exists already
+		if err == nil {
+			return nil
+		}
+
+		// Preparing pull consumer
+		subject := fmt.Sprintf(productEventSubject, pm.domain, productName, "*")
+		cfg := &nats.ConsumerConfig{
+			Durable:       durable,
+			Description:   "Product Subscription",
+			FilterSubject: subject,
+			AckPolicy:     nats.AckExplicitPolicy,
+			MaxAckPending: 2000,
+			MaxDeliver:    -1,
+			ReplayPolicy:  nats.ReplayInstantPolicy,
+			//DeliverSubject: nats.NewInbox(),
+		}
+
+		if startSeq > 0 {
+			cfg.DeliverPolicy = nats.DeliverByStartSequencePolicy
+			cfg.OptStartSeq = startSeq
+		}
+
+		// Create consumer on data product stream
+		_, err = js.AddConsumer(streamName, cfg)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+*/
+func (pm *ProductManager) InitConsumer(productName string, consumerName string, partitions []int, startSeq uint64) error {
 
 	js, err := pm.client.GetJetStream()
 	if err != nil {
@@ -244,7 +298,7 @@ func (pm *ProductManager) PrepareSubscription(productName string, durable string
 	}
 
 	// Check wheter consumer exist or not
-	_, err = js.ConsumerInfo(streamName, streamName)
+	_, err = js.ConsumerInfo(streamName, consumerName)
 	if err != nats.ErrConsumerNotFound {
 		return err
 	}
@@ -254,17 +308,29 @@ func (pm *ProductManager) PrepareSubscription(productName string, durable string
 		return nil
 	}
 
-	// Preparing push consumer
-	subject := fmt.Sprintf(productEventSubject, pm.domain, productName, "*")
+	// Preparing pull consumer
 	cfg := &nats.ConsumerConfig{
-		Durable:       durable,
+		Durable:       consumerName,
 		Description:   "Product Subscription",
-		FilterSubject: subject,
 		AckPolicy:     nats.AckExplicitPolicy,
 		MaxAckPending: 2000,
 		MaxDeliver:    -1,
 		ReplayPolicy:  nats.ReplayInstantPolicy,
 		//DeliverSubject: nats.NewInbox(),
+	}
+
+	// Preparing subsjects
+	if len(partitions) == 0 {
+		subject := fmt.Sprintf(productEventSubject, pm.domain, productName, "*")
+		cfg.FilterSubject = subject
+	} else {
+		subjects := make([]string, len(partitions))
+		for _, partition := range partitions {
+			subject := fmt.Sprintf(productEventSubject, pm.domain, productName, strconv.Itoa(partition))
+			subjects = append(subjects, subject)
+		}
+
+		cfg.FilterSubjects = subjects
 	}
 
 	if startSeq > 0 {
@@ -279,4 +345,27 @@ func (pm *ProductManager) PrepareSubscription(productName string, durable string
 	}
 
 	return nil
+}
+
+func (pm *ProductManager) DeleteConsumer(productName string, consumerName string) error {
+
+	js, err := pm.client.GetJetStream()
+	if err != nil {
+		return err
+	}
+
+	// Check if the stream already exists
+	streamName := fmt.Sprintf(productEventStream, pm.domain, productName)
+	_, err = js.StreamInfo(streamName)
+	if err != nil {
+		return err
+	}
+
+	// Check wheter consumer exist or not
+	_, err = js.ConsumerInfo(streamName, consumerName)
+	if err != nats.ErrConsumerNotFound {
+		return nil
+	}
+
+	return js.DeleteConsumer(streamName, consumerName)
 }
