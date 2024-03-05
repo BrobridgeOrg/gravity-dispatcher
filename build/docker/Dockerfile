@@ -1,4 +1,4 @@
-FROM golang:1.20.2-alpine3.17 AS builder
+FROM golang:1.21.7-alpine3.19 AS builder
 WORKDIR /
 COPY . .
 
@@ -9,7 +9,7 @@ RUN git clone https://github.com/BrobridgeOrg/gravity-cli.git &&\
 	cd gravity-cli &&\
 	go build
 
-FROM alpine:3.17.2
+FROM alpine:3.19.1
 WORKDIR /
 RUN apk update && apk upgrade --available && apk add tzdata
 COPY ./configs /configs
