@@ -1,15 +1,16 @@
-FROM golang:1.21.13-alpine3.20 AS builder
+FROM golang:1.23.1-alpine3.20 AS builder
 
 ENV GOBIN=/
 
 WORKDIR /
 COPY . .
 
-RUN apk add --update build-base git && apk upgrade --available
-RUN go build -o /gravity-dispatcher
+RUN apk add --update build-base git upx && apk upgrade --available
+RUN go build -ldflags="-s -w" -o /gravity-dispatcher
 
-RUN go install github.com/BrobridgeOrg/gravity-cli@latest
+RUN go install -ldflags="-s -w" github.com/BrobridgeOrg/gravity-cli@latest
 
+RUN upx -6 /gravity-cli /gravity-dispatcher
 
 FROM alpine:3.20
 WORKDIR /
