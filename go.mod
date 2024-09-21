@@ -54,6 +54,6 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/BrobridgeOrg/gravity-sdk/v2 => ../gravity-sdk
+//replace github.com/BrobridgeOrg/gravity-sdk/v2 => ../gravity-sdk
 
 // replace github.com/BrobridgeOrg/compton => ../../compton
