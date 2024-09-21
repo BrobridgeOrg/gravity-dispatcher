@@ -18,7 +18,7 @@ type Message struct {
 	Event           string
 	Product         *Product
 	Rule            *rule_manager.Rule
-	Data            MessageRawData
+	Data            *MessageRawData
 	Raw             []byte
 	Partition       int32
 	ProductEvent    *gravity_sdk_types_product_event.ProductEvent
@@ -37,12 +37,16 @@ type MessageRawData struct {
 
 var MessagePool = sync.Pool{
 	New: func() interface{} {
-		return &Message{}
+		return &Message{
+			Data: &MessageRawData{},
+		}
 	},
 }
 
 func NewMessage() *Message {
-	return MessagePool.Get().(*Message)
+	m := MessagePool.Get().(*Message)
+	m.Reset()
+	return m
 }
 
 func (m *Message) ParseRawData() error {
@@ -80,6 +84,8 @@ func (m *Message) Reset() {
 	if m.OutputMsg != nil {
 		natsMsgPool.Put(m.OutputMsg)
 	}
+
+	m.Data = &MessageRawData{}
 }
 
 func (m *Message) Ack() error {

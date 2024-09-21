@@ -293,6 +293,11 @@ func (p *Product) dispatcherBufferHandler(chunk []interface{}) {
 
 		m := v.(*Message)
 
+		/*
+			fmt.Println("Dispatching message", m.Event)
+			fmt.Println(string(m.Data.RawPayload))
+			fmt.Println(m.Data.Payload)
+		*/
 		err := m.Dispatch()
 		if err != nil {
 
