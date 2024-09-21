@@ -2,8 +2,6 @@ module github.com/BrobridgeOrg/gravity-dispatcher
 
 go 1.21
 
-toolchain go1.21.4
-
 require (
 	github.com/BrobridgeOrg/gravity-sdk/v2 v2.0.7
 	github.com/BrobridgeOrg/schemer v0.0.13
@@ -17,11 +15,13 @@ require (
 	github.com/nats-io/nats.go v1.33.1
 	github.com/spf13/cobra v1.3.0
 	github.com/spf13/viper v1.10.1
+	github.com/stretchr/testify v1.8.0
 	go.uber.org/fx v1.17.0
 	go.uber.org/zap v1.21.0
 )
 
 require (
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dlclark/regexp2 v1.4.1-0.20201116162257-a2a8dda75c91 // indirect
 	github.com/dop251/goja v0.0.0-20220214123719-b09a6bfa842f // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
@@ -36,6 +36,7 @@ require (
 	github.com/nats-io/nkeys v0.4.7 // indirect
 	github.com/nats-io/nuid v1.0.1 // indirect
 	github.com/pelletier/go-toml v1.9.4 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/spf13/afero v1.8.1 // indirect
 	github.com/spf13/cast v1.4.1 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
@@ -50,8 +51,9 @@ require (
 	google.golang.org/protobuf v1.27.1 // indirect
 	gopkg.in/ini.v1 v1.66.4 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-// replace github.com/BrobridgeOrg/gravity-sdk/v2 => ../gravity-sdk
+replace github.com/BrobridgeOrg/gravity-sdk/v2 => ../gravity-sdk
 
 // replace github.com/BrobridgeOrg/compton => ../../compton
