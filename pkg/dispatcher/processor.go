@@ -2,6 +2,7 @@ package dispatcher
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 
 	"github.com/BrobridgeOrg/gravity-dispatcher/pkg/dispatcher/converter"
@@ -208,7 +209,7 @@ func (p *Processor) convert(msg *Message) (*gravity_sdk_types_product_event.Prod
 	pe := productEventPool.Get().(*gravity_sdk_types_product_event.ProductEvent)
 	pe.Reset()
 	pe.EventName = msg.Data.Event
-	pe.Method = gravity_sdk_types_product_event.Method(gravity_sdk_types_product_event.Method_value[msg.Rule.Method])
+	pe.Method = gravity_sdk_types_product_event.Method(gravity_sdk_types_product_event.Method_value[strings.ToUpper(msg.Rule.Method)])
 	pe.Table = msg.Rule.Product
 	pe.PrimaryKeys = msg.Rule.PrimaryKey
 
