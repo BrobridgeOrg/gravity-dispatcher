@@ -3,8 +3,8 @@ module github.com/BrobridgeOrg/gravity-dispatcher
 go 1.21
 
 require (
-	github.com/BrobridgeOrg/gravity-sdk/v2 v2.0.7
-	github.com/BrobridgeOrg/schemer v0.0.13
+	github.com/BrobridgeOrg/gravity-sdk/v2 v2.0.8
+	github.com/BrobridgeOrg/schemer v0.0.16
 	github.com/BrobridgeOrg/sequential-data-flow v0.0.2
 	github.com/cfsghost/buffered-input v0.0.3
 	github.com/d5/tengo v1.24.8
