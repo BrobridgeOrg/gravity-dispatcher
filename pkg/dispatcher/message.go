@@ -79,13 +79,27 @@ func (m *Message) Reset() {
 
 	if m.ProductEvent != nil {
 		productEventPool.Put(m.ProductEvent)
+		m.ProductEvent = nil
 	}
 
 	if m.OutputMsg != nil {
 		natsMsgPool.Put(m.OutputMsg)
+		m.OutputMsg = nil
 	}
 
-	m.Data = &MessageRawData{}
+	m.Msg = nil
+	m.Rule = nil
+	m.Product = nil
+	m.ProductEvent = nil
+	m.OutputMsg = nil
+	m.TargetSchema = nil
+	m.Event = ""
+	m.Raw = []byte("")
+	m.RawProductEvent = []byte("")
+	m.Ignore = false
+	m.Data = &MessageRawData{
+		Payload: make(map[string]interface{}),
+	}
 }
 
 func (m *Message) Ack() error {

@@ -162,6 +162,10 @@ func (p *Processor) handle(msg *Message, output func(interface{})) {
 
 func (p *Processor) checkRule(msg *Message) bool {
 
+	if msg.Product == nil {
+		return false
+	}
+
 	// Get matched rules by event
 	rules := msg.Product.Rules.GetRulesByEvent(msg.Event)
 	if len(rules) == 0 {
@@ -202,6 +206,7 @@ func (p *Processor) convert(msg *Message) (*gravity_sdk_types_product_event.Prod
 
 	// Prepare product_event
 	pe := productEventPool.Get().(*gravity_sdk_types_product_event.ProductEvent)
+	pe.Reset()
 	pe.EventName = msg.Data.Event
 	pe.Method = gravity_sdk_types_product_event.Method(gravity_sdk_types_product_event.Method_value[msg.Rule.Method])
 	pe.Table = msg.Rule.Product

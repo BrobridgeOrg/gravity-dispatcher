@@ -360,11 +360,8 @@ func (p *Product) handleMessage(eventName string, msg *nats.Msg) {
 	m.Publisher = p.manager.dispatcher.publisherJSCtx
 	m.Event = eventName
 	m.Msg = msg
-	m.Rule = nil
 	m.Product = p
 	m.Raw = msg.Data
-	m.ProductEvent = nil
-	m.OutputMsg = nil
 
 	if len(eventName) > 0 {
 		m.Ignore = false
@@ -378,14 +375,9 @@ func (p *Product) handleMessage(eventName string, msg *nats.Msg) {
 func (p *Product) HandleRawMessage(eventName string, raw []byte) {
 	m := NewMessage()
 	m.Ignore = false
-	m.Publisher = nil
 	m.Event = eventName
-	m.Msg = nil
-	m.Rule = nil
 	m.Product = p
 	m.Raw = raw
-	m.ProductEvent = nil
-	m.OutputMsg = nil
 
 	p.processor.Push(m)
 }

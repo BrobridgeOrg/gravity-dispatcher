@@ -2,13 +2,9 @@ package dispatcher
 
 import (
 	"testing"
-
-	"go.uber.org/zap"
 )
 
 func BenchmarkProcessor(b *testing.B) {
-
-	logger = zap.NewExample()
 
 	rawPayload := map[string]interface{}{
 		"id":   1,
