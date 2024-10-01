@@ -145,20 +145,27 @@ func (ew *EventWatcher) Init() error {
 			zap.String("subject", subject),
 		)
 
-		//TODO: set more than one replicas if jetstream cluster exists
-		_, err := js.AddStream(&nats.StreamConfig{
+		// Attempt to set three replicas
+		sConfig := &nats.StreamConfig{
 			Name:        streamName,
 			Description: "Gravity domain event store",
 			Duplicates:  30 * time.Minute,
 			Subjects: []string{
 				subject,
 			},
-			Replicas: 1,
+			Replicas: 3,
 			//			Retention: nats.InterestPolicy,
-		})
+		}
 
+		_, err := js.AddStream(sConfig)
 		if err != nil {
-			return err
+
+			// Attempt to set one replicas for single node
+			sConfig.Replicas = 1
+			_, err := js.AddStream(sConfig)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	/*
