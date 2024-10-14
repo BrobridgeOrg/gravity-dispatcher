@@ -57,7 +57,7 @@ func convert(def *schemer.Definition, data interface{}) (*record_type.Value, err
 			ele := v.Index(i)
 
 			// Convert value to protobuf format
-			v, err := getValue(def.Subtype, ele.Interface())
+			v, err := getValue(def.Subtype.Type, ele.Interface())
 			if err != nil {
 				fmt.Println(err)
 				continue
@@ -79,7 +79,7 @@ func convert(def *schemer.Definition, data interface{}) (*record_type.Value, err
 			return nil, fmt.Errorf("Not a map object")
 		}
 
-		fields, err := Convert(def.Definition, data.(map[string]interface{}))
+		fields, err := Convert(def.Schema, data.(map[string]interface{}))
 		if err != nil {
 			return nil, err
 		}

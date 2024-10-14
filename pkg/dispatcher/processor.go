@@ -130,7 +130,7 @@ func (p *Processor) handle(msg *Message, output func(interface{})) {
 	if msg.Msg != nil {
 		// Unique message ID
 		meta, _ := msg.Msg.Metadata()
-		msg.ID = fmt.Sprintf("%d", meta.Sequence.Consumer)
+		msg.ID = fmt.Sprintf("%d", meta.Sequence.Stream)
 		header = msg.Msg.Header
 	}
 
