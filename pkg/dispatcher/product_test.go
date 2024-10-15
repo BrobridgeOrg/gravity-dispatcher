@@ -180,3 +180,87 @@ func TestProductTransformerSrcipt(t *testing.T) {
 
 	wg.Wait()
 }
+
+func TestProductMessageHandler_StressTest(t *testing.T) {
+
+	logger = zap.NewExample()
+
+	targetNum := 100000
+
+	results := make(chan *record_type.Record, targetNum)
+	defer close(results)
+
+	// Preparing processor
+	p := NewProcessor(
+		WithOutputHandler(func(msg *Message) {
+			r, err := msg.ProductEvent.GetContent()
+			if !assert.Nil(t, err) {
+				return
+			}
+
+			results <- r
+		}),
+	)
+
+	// Preparing product
+	setting := CreateTestProductSetting()
+
+	// Preapring rule
+	r := CreateTestProductRule()
+
+	setting.Rules = map[string]*product_sdk.Rule{
+		"testRule": r,
+	}
+
+	// Create product and apply setting
+	product := NewProduct(nil)
+	product.onMessage = func(msg *Message) {
+		p.Push(msg)
+	}
+	product.ApplySettings(setting)
+
+	// Prepare Messages
+	payload := map[string]interface{}{
+		"id": 0,
+	}
+
+	go func() {
+		for i := 0; i < targetNum; i++ {
+
+			id := i + 1
+			payload["id"] = id
+			payloadBytes, _ := json.Marshal(payload)
+
+			testData := MessageRawData{
+				Event:      "dataCreated",
+				RawPayload: payloadBytes,
+			}
+
+			raw, _ := json.Marshal(testData)
+			product.HandleRawMessage(testData.Event, raw)
+
+			if id%10000 == 0 {
+				t.Log("Processed", id)
+			}
+		}
+	}()
+
+	counter := 0
+	for r := range results {
+		counter++
+		for _, field := range r.Payload.Map.Fields {
+			switch field.Name {
+			case "id":
+				if !assert.Equal(t, int64(counter), record_type.GetValueData(field.Value)) {
+					return
+				}
+			}
+		}
+
+		if counter == targetNum {
+			break
+		}
+	}
+
+	assert.Equal(t, counter, targetNum)
+}
