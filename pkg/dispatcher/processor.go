@@ -237,10 +237,14 @@ func (p *Processor) convert(msg *Message) (*gravity_sdk_types_product_event.Prod
 	// Calcuate primary key
 	pk, err := r.CalculateKey(pe.PrimaryKeys)
 	if err != nil {
-		return nil, err
+		if err != record_type.ErrNotFoundKeyPath {
+			return nil, err
+		}
 	}
 
-	pe.PrimaryKey = pk
+	if pk != nil {
+		pe.PrimaryKey = pk
+	}
 
 	// Write data back to product event
 	pe.SetContent(r)

@@ -23,11 +23,20 @@ func CreateTestRule() *rule_manager.Rule {
 	schemaRaw := `{
 	"id": { "type": "int" },
 	"name": { "type": "string" },
-	"gender": { "type": "string" }
+	"gender": { "type": "string" },
+	"nested": {
+		"type": "map",
+		"fields": {
+			"nested_id": { "type": "string" }
+		}
+	}
 }`
 
 	var schemaConfig map[string]interface{}
-	json.Unmarshal([]byte(schemaRaw), &schemaConfig)
+	err := json.Unmarshal([]byte(schemaRaw), &schemaConfig)
+	if err != nil {
+		panic(err)
+	}
 
 	r.SchemaConfig = schemaConfig
 
@@ -77,6 +86,58 @@ func TestProcessorOutput(t *testing.T) {
 	testData := MessageRawData{
 		Event:      "dataCreated",
 		RawPayload: []byte(`{"id":101,"name":"fred"}`),
+	}
+
+	// Preparing message with raw data
+	msg := CreateTestMessage()
+	raw, _ := json.Marshal(testData)
+	msg.Raw = raw
+
+	p.Push(msg)
+
+	<-done
+}
+
+func TestProcessor_UpdateNestedFields(t *testing.T) {
+
+	logger = zap.NewExample()
+
+	done := make(chan struct{})
+
+	p := NewProcessor(
+		WithOutputHandler(func(msg *Message) {
+			assert.Equal(t, "dataCreated", msg.ProductEvent.EventName)
+			assert.Equal(t, "TestDataProduct", msg.ProductEvent.Table)
+
+			r, err := msg.ProductEvent.GetContent()
+			if !assert.Nil(t, err) {
+				return
+			}
+
+			for _, field := range r.Payload.Map.Fields {
+				switch field.Name {
+				case "$removedFields":
+					v := record_type.GetValueData(field.Value)
+					for _, ele := range v.([]interface{}) {
+						assert.Equal(t, "id", ele.(string))
+					}
+				case "nested.nested_id":
+					assert.Equal(t, "hello", record_type.GetValueData(field.Value))
+				default:
+					assert.Fail(t, "Unexpected field")
+				}
+			}
+
+			done <- struct{}{}
+		}),
+	)
+
+	testData := MessageRawData{
+		Event: "dataCreated",
+		RawPayload: []byte(`{
+	"$removedFields": ["id"],
+	"nested.nested_id": "hello"
+}`),
 	}
 
 	// Preparing message with raw data

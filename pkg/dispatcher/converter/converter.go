@@ -123,27 +123,86 @@ func Convert(schema *schemer.Schema, data map[string]interface{}) ([]*record_typ
 		return fields, nil
 	}
 
-	for fieldName, def := range schema.Fields {
+	for k, v := range data {
 
-		value, ok := data[fieldName]
-		if !ok {
+		if k == "$removedFields" {
+
+			switch d := v.(type) {
+			case []interface{}:
+
+				elements := make([]*record_type.Value, 0, len(d))
+
+				for _, fieldName := range d {
+					name, ok := fieldName.(string)
+					if !ok {
+						continue
+					}
+
+					v, err := record_type.CreateValue(record_type.DataType_STRING, name)
+					if err != nil {
+						fmt.Println(err)
+						continue
+					}
+
+					elements = append(elements, v)
+				}
+
+				field := &record_type.Field{
+					Name: "$removedFields",
+					Value: &record_type.Value{
+						Type: record_type.DataType_ARRAY,
+						Array: &record_type.ArrayValue{
+							Elements: elements,
+						},
+					},
+				}
+				fields = append(fields, field)
+			}
+
 			continue
 		}
 
+		def := schema.GetDefinition(k)
+		if def == nil {
+			fmt.Println("Definition not found for field", k)
+		}
+
 		// Convert raw data
-		v, err := convert(def, value)
+		v, err := convert(def, v)
 		if err != nil {
 			fmt.Println(err)
 			continue
 		}
 
 		field := &record_type.Field{
-			Name:  fieldName,
+			Name:  k,
 			Value: v,
 		}
 
 		fields = append(fields, field)
 	}
+	/*
+		for fieldName, def := range schema.Fields {
 
+			value, ok := data[fieldName]
+			if !ok {
+				continue
+			}
+
+			// Convert raw data
+			v, err := convert(def, value)
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
+
+			field := &record_type.Field{
+				Name:  fieldName,
+				Value: v,
+			}
+
+			fields = append(fields, field)
+		}
+	*/
 	return fields, nil
 }
