@@ -283,8 +283,9 @@ func (p *Product) emit(msg *Message) {
 
 func (p *Product) dispatcherBufferHandler(chunk []interface{}) {
 
-	ackNum := 0
+	doneCount := 0
 	var prev *Message
+	msgs := make([]*Message, 0)
 	for i, v := range chunk {
 
 		if !p.IsRunning {
@@ -305,7 +306,7 @@ func (p *Product) dispatcherBufferHandler(chunk []interface{}) {
 			if prev != nil {
 				prev.Ack()
 				prev.Release()
-				ackNum = i
+				doneCount = i
 
 				logger.Info("Messages were dispatched",
 					zap.String("product", p.Name),
@@ -337,16 +338,29 @@ func (p *Product) dispatcherBufferHandler(chunk []interface{}) {
 			}
 		}
 
-		prev = v.(*Message)
+		msgs = append(msgs, m)
+		prev = m
 	}
 
-	if ackNum < len(chunk) {
+	// Wait for all messages to be dispatched
+	var wg sync.WaitGroup
+	for _, m := range msgs {
+		wg.Add(1)
+		go func(m *Message) {
+			defer wg.Done()
+			m.Wait()
+		}(m)
+	}
+
+	wg.Wait()
+
+	if doneCount < len(chunk) {
 		prev.Ack()
 		prev.Release()
 
 		logger.Info("Messages were dispatched",
 			zap.String("product", p.Name),
-			zap.Int("count", len(chunk)-ackNum),
+			zap.Int("count", len(chunk)-doneCount),
 		)
 	}
 }
