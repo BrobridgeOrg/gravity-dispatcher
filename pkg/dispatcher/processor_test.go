@@ -1,6 +1,7 @@
 package dispatcher
 
 import (
+	"errors"
 	"sync"
 	"testing"
 
@@ -29,6 +30,10 @@ func CreateTestRule() *rule_manager.Rule {
 		"fields": {
 			"nested_id": { "type": "string" }
 		}
+	},
+	"tags": {
+		"type": "array",
+		"subtype": "string"
 	}
 }`
 
@@ -54,6 +59,17 @@ func CreateTestMessage() *Message {
 	msg.Rule = r
 
 	return msg
+}
+
+func GetFieldValue(r *record_type.Record, fieldName string) (interface{}, error) {
+
+	for _, field := range r.Payload.Map.Fields {
+		if field.Name == fieldName {
+			return record_type.GetValueData(field.Value), nil
+		}
+	}
+
+	return nil, errors.New("Field not found")
 }
 
 func TestProcessorOutput(t *testing.T) {
@@ -114,18 +130,18 @@ func TestProcessor_UpdateNestedFields(t *testing.T) {
 				return
 			}
 
-			for _, field := range r.Payload.Map.Fields {
-				switch field.Name {
-				case "$removedFields":
-					v := record_type.GetValueData(field.Value)
-					for _, ele := range v.([]interface{}) {
-						assert.Equal(t, "id", ele.(string))
-					}
-				case "nested.nested_id":
-					assert.Equal(t, "hello", record_type.GetValueData(field.Value))
-				default:
-					assert.Fail(t, "Unexpected field")
+			if v, err := GetFieldValue(r, "$removedFields"); assert.Nil(t, err) {
+				for _, ele := range v.([]interface{}) {
+					assert.Equal(t, "id", ele.(string))
 				}
+			}
+
+			if v, err := GetFieldValue(r, "nested.nested_id"); assert.Nil(t, err) {
+				assert.Equal(t, "hello", v)
+			}
+
+			if v, err := GetFieldValue(r, "tags.0"); assert.Nil(t, err) {
+				assert.Equal(t, "new_tag1", v)
 			}
 
 			done <- struct{}{}
@@ -136,7 +152,8 @@ func TestProcessor_UpdateNestedFields(t *testing.T) {
 		Event: "dataCreated",
 		RawPayload: []byte(`{
 	"$removedFields": ["id"],
-	"nested.nested_id": "hello"
+	"nested.nested_id": "hello",
+	"tags.0": "new_tag1"
 }`),
 	}
 

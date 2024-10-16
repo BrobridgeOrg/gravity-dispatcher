@@ -4,7 +4,7 @@ go 1.21
 
 require (
 	github.com/BrobridgeOrg/gravity-sdk/v2 v2.0.9
-	github.com/BrobridgeOrg/schemer v0.0.17
+	github.com/BrobridgeOrg/schemer v0.0.18
 	github.com/BrobridgeOrg/sequential-data-flow v0.0.2
 	github.com/cfsghost/buffered-input v0.0.3
 	github.com/d5/tengo v1.24.8

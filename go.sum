@@ -51,8 +51,8 @@ cloud.google.com/go/storage v1.14.0/go.mod h1:GrKmX003DSIwi9o29oFT7YDnHYwZoctc3f
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
 github.com/BrobridgeOrg/gravity-sdk/v2 v2.0.9 h1:62fjMrF8DDhwk3ZeoWE9fWbFz9mcTS1Oi6C5TOMLY+k=
 github.com/BrobridgeOrg/gravity-sdk/v2 v2.0.9/go.mod h1:W+U5vDBcvrkF3hR5nJpmjQwO3owwKp6DoDrKwSaJt+w=
-github.com/BrobridgeOrg/schemer v0.0.17 h1:o5d/aJcSjNDdcutNHW6bAcZ70RQLh/ExQLoKtCpMk1M=
-github.com/BrobridgeOrg/schemer v0.0.17/go.mod h1:k/tJt7IjTJmNQD0uJwJb9Ej1a7MeSBaAdjFzYbLKLMU=
+github.com/BrobridgeOrg/schemer v0.0.18 h1:Eot0/qHo6GYXtNxdE+ljDdO5RI5OWeCWCsbMZHS5OZs=
+github.com/BrobridgeOrg/schemer v0.0.18/go.mod h1:k/tJt7IjTJmNQD0uJwJb9Ej1a7MeSBaAdjFzYbLKLMU=
 github.com/BrobridgeOrg/sequential-data-flow v0.0.2 h1:m5nQDQZOVVv2/EeUoycFVGWjJO7gvIRM1x/I6IWUxyI=
 github.com/BrobridgeOrg/sequential-data-flow v0.0.2/go.mod h1:6VX70a4GdqVSqjYwuFv5bmQ4XYnk2XSiehO2maiv8P8=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
