@@ -246,7 +246,7 @@ func (ew *EventWatcher) subscribe(subject string, fn func(string, *nats.Msg)) er
 		return err
 	}
 
-	sub.SetPendingLimits(-1, -1)
+	sub.SetPendingLimits(2048, -1)
 	ew.client.GetConnection().Flush()
 
 	ew.sub = sub
