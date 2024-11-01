@@ -261,7 +261,7 @@ func (ew *EventWatcher) subscribe(subject string, fn func(string, *nats.Msg)) er
 
 		for ew.running {
 
-			msgs, err := sub.Fetch(512, nats.MaxWait(time.Second))
+			msgs, err := sub.Fetch(2048, nats.MaxWait(time.Second))
 			if err != nil {
 
 				if err == nats.ErrTimeout {

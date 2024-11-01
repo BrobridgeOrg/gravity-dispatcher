@@ -200,7 +200,7 @@ func (p *Processor) calculatePrimaryKey(msg *Message) {
 	}
 */
 func (p *Processor) calculatePartition(msg *Message) {
-	msg.Partition = jump.HashString(string(msg.ProductEvent.PrimaryKey), 256, jump.NewCRC64())
+	msg.Partition = jump.HashString(BytesToString(msg.ProductEvent.PrimaryKey), 256, jump.NewCRC64())
 }
 
 func (p *Processor) convert(msg *Message) (*gravity_sdk_types_product_event.ProductEvent, error) {
@@ -236,10 +236,8 @@ func (p *Processor) convert(msg *Message) (*gravity_sdk_types_product_event.Prod
 
 	// Calcuate primary key
 	pk, err := r.CalculateKey(pe.PrimaryKeys)
-	if err != nil {
-		if err != record_type.ErrNotFoundKeyPath {
-			return nil, err
-		}
+	if err != nil && err != record_type.ErrNotFoundKeyPath {
+		return nil, err
 	}
 
 	if pk != nil {
