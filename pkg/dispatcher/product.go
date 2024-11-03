@@ -343,16 +343,9 @@ func (p *Product) dispatcherBufferHandler(chunk []interface{}) {
 	}
 
 	// Wait for all messages to be dispatched
-	var wg sync.WaitGroup
 	for _, m := range msgs {
-		wg.Add(1)
-		go func(m *Message) {
-			defer wg.Done()
-			m.Wait()
-		}(m)
+		m.Wait()
 	}
-
-	wg.Wait()
 
 	if doneCount < len(chunk) {
 		prev.Ack()
