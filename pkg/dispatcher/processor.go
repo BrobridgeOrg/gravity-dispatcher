@@ -8,7 +8,7 @@ import (
 	"github.com/BrobridgeOrg/gravity-dispatcher/pkg/dispatcher/converter"
 	gravity_sdk_types_product_event "github.com/BrobridgeOrg/gravity-sdk/v2/types/product_event"
 	record_type "github.com/BrobridgeOrg/gravity-sdk/v2/types/record"
-	sdf "github.com/BrobridgeOrg/sequential-data-flow"
+	sequential_task_runner "github.com/BrobridgeOrg/sequential-task-runner"
 	"github.com/lithammer/go-jump-consistent-hash"
 	"github.com/nats-io/nats.go"
 	"go.uber.org/zap"
@@ -27,7 +27,7 @@ var natsMsgPool = sync.Pool{
 }
 
 type Processor struct {
-	flow          *sdf.Flow
+	runner        *sequential_task_runner.Runner
 	outputHandler func(*Message)
 	domain        string
 }
@@ -43,19 +43,19 @@ func NewProcessor(opts ...func(*Processor)) *Processor {
 		o(p)
 	}
 
-	// Initialize sequential data flow
-	options := sdf.NewOptions()
-	options.BufferSize = 2048
-	options.Handler = func(data interface{}, output func(interface{})) {
-		p.handle(data.(*Message), output)
-	}
-	p.flow = sdf.NewFlow(options)
+	// Initializing sequential task runner
+	p.runner = sequential_task_runner.NewRunner(
+		sequential_task_runner.WithWorkerCount(4),
+		sequential_task_runner.WithMaxPendingCount(2048),
+		sequential_task_runner.WithWorkerHandler(func(workerID int, task interface{}) interface{} {
+			return p.process(task.(*Message))
+		}),
+	)
 
-	go func() {
-		for result := range p.flow.Output() {
-			p.outputHandler(result.(*Message))
-		}
-	}()
+	// Configure output handler
+	p.runner.Subscribe(func(result interface{}) {
+		p.outputHandler(result.(*Message))
+	})
 
 	return p
 }
@@ -73,26 +73,25 @@ func WithOutputHandler(fn func(*Message)) func(*Processor) {
 }
 
 func (p *Processor) Push(msg *Message) {
-	p.flow.Push(msg)
+	//	p.flow.Push(msg)
+	p.runner.AddTask(msg)
 }
 
 func (p *Processor) Close() {
-	p.flow.Close()
+	p.runner.Close()
 }
 
-func (p *Processor) handle(msg *Message, output func(interface{})) {
+func (p *Processor) process(msg *Message) *Message {
 
 	if msg.Ignore {
-		output(msg)
-		return
+		return msg
 	}
 
 	if msg.Rule == nil {
 		if !p.checkRule(msg) {
 			// No match found, so ignore
 			msg.Ignore = true
-			output(msg)
-			return
+			return msg
 		}
 	}
 
@@ -103,8 +102,7 @@ func (p *Processor) handle(msg *Message, output func(interface{})) {
 			zap.Error(err),
 		)
 		msg.Ignore = true
-		output(msg)
-		return
+		return msg
 	}
 
 	//	p.calculatePrimaryKey(msg)
@@ -115,8 +113,7 @@ func (p *Processor) handle(msg *Message, output func(interface{})) {
 		// Failed to parse payload
 		logger.Error(err.Error())
 		msg.Ignore = true
-		output(msg)
-		return
+		return msg
 	}
 
 	msg.ProductEvent = product_event
@@ -158,7 +155,7 @@ func (p *Processor) handle(msg *Message, output func(interface{})) {
 		}
 	*/
 
-	output(msg)
+	return msg
 }
 
 func (p *Processor) checkRule(msg *Message) bool {

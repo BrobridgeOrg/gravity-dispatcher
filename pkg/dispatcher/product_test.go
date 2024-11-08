@@ -201,6 +201,7 @@ func TestProductMessageHandler_StressTest(t *testing.T) {
 			results <- r
 		}),
 	)
+	defer p.Close()
 
 	// Preparing product
 	setting := CreateTestProductSetting()
