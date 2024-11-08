@@ -391,7 +391,7 @@ func (p *Product) HandleRawMessage(eventName string, raw []byte) {
 
 func (p *Product) ApplySettings(setting *product_sdk.ProductSetting) error {
 
-	err := p.Deactivate()
+	err := p.deactivate()
 	if err != nil {
 		return err
 	}
@@ -476,11 +476,7 @@ func (p *Product) PurgeTasks() error {
 	return nil
 }
 
-func (p *Product) Deactivate() error {
-
-	logger.Info("Deactivating product",
-		zap.String("product", p.Name),
-	)
+func (p *Product) deactivate() error {
 
 	p.IsRunning = false
 
@@ -491,6 +487,15 @@ func (p *Product) Deactivate() error {
 	}
 
 	return nil
+}
+
+func (p *Product) Deactivate() error {
+
+	logger.Info("Deactivating product",
+		zap.String("product", p.Name),
+	)
+
+	return p.deactivate()
 }
 
 func (p *Product) Activate() error {
