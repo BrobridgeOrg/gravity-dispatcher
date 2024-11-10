@@ -44,3 +44,7 @@ func NewHandler(config *product_sdk.HandlerConfig, sourceSchema *schemer.Schema,
 func (e *Handler) Run(env map[string]interface{}, data map[string]interface{}) ([]map[string]interface{}, error) {
 	return e.Transformer.Transform(env, data)
 }
+
+func (e *Handler) GetDestinationSchema() *schemer.Schema {
+	return e.Transformer.GetDestinationSchema()
+}

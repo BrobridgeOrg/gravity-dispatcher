@@ -45,7 +45,7 @@ func NewProcessor(opts ...func(*Processor)) *Processor {
 
 	// Initializing sequential task runner
 	p.runner = sequential_task_runner.NewRunner(
-		sequential_task_runner.WithWorkerCount(4),
+		sequential_task_runner.WithWorkerCount(8),
 		sequential_task_runner.WithMaxPendingCount(2048),
 		sequential_task_runner.WithWorkerHandler(func(workerID int, task interface{}) interface{} {
 			return p.process(task.(*Message))
@@ -73,7 +73,6 @@ func WithOutputHandler(fn func(*Message)) func(*Processor) {
 }
 
 func (p *Processor) Push(msg *Message) {
-	//	p.flow.Push(msg)
 	p.runner.AddTask(msg)
 }
 
@@ -211,7 +210,8 @@ func (p *Processor) convert(msg *Message) (*gravity_sdk_types_product_event.Prod
 	pe.PrimaryKeys = msg.Rule.PrimaryKey
 
 	// Transforming
-	results, err := msg.Rule.Handler.Run(nil, msg.Data.Payload)
+	//results, err := msg.Rule.Handler.Run(nil, msg.Data.Payload)
+	results, err := msg.Rule.Transform(nil, msg.Data.Payload)
 	if err != nil {
 		return nil, err
 	}
@@ -223,7 +223,7 @@ func (p *Processor) convert(msg *Message) (*gravity_sdk_types_product_event.Prod
 
 	// Fill product_event
 	result := results[0]
-	fields, err := converter.Convert(msg.Rule.Handler.Transformer.GetDestinationSchema(), result)
+	fields, err := converter.Convert(msg.Rule.Handler.GetDestinationSchema(), result)
 	if err != nil {
 		return nil, err
 	}

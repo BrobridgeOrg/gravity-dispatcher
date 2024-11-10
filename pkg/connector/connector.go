@@ -3,9 +3,11 @@ package connector
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"time"
 
 	"github.com/BrobridgeOrg/gravity-sdk/v2/core"
+	"github.com/nats-io/nats-server/v2/server"
 	"github.com/spf13/viper"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -21,6 +23,7 @@ const (
 	DefaultMaxReconnects       = -1
 	DefaultAccessKey           = ""
 	DefaultDomain              = "default"
+	DefaultConnectionMode      = "default"
 )
 
 type Connector struct {
@@ -64,10 +67,19 @@ func (c *Connector) initialize() error {
 	viper.SetDefault("gravity.pingInterval", DefaultPingInterval)
 	viper.SetDefault("gravity.maxPingsOutstanding", DefaultMaxPingsOutstanding)
 	viper.SetDefault("gravity.maxReconnects", DefaultMaxReconnects)
+	viper.SetDefault("gravity.connectionMode", DefaultConnectionMode)
 
 	// Get domain
 	domain := viper.GetString("gravity.domain")
 	c.domain = domain
+
+	// Connection mode is leaf node
+	connectionMode := viper.GetString("gravity.connectionMode")
+	if connectionMode == "leaf" {
+		err := c.StartLeafNode()
+		if err != nil {
+		}
+	}
 
 	// Initializing client
 	client, err := c.CreateClient()
@@ -81,13 +93,73 @@ func (c *Connector) initialize() error {
 	return nil
 }
 
+func (c *Connector) StartLeafNode() error {
+
+	host := viper.GetString("gravity.host")
+	port := viper.GetInt("gravity.port")
+
+	logger.Info("Starting leaf node...",
+		zap.String("targetHost", host),
+		zap.Int("targetPort", port),
+	)
+
+	serverUrl := fmt.Sprintf("nats://%s:%d", host, port)
+	u, err := url.Parse(serverUrl)
+	if err != nil {
+		return err
+	}
+
+	opts := &server.Options{
+		JetStream: true,
+		LeafNode: server.LeafNodeOpts{
+			Remotes: []*server.RemoteLeafOpts{
+				{
+					URLs: []*url.URL{u},
+				},
+			},
+		},
+	}
+	s, err := server.NewServer(opts)
+	if err != nil {
+		return err
+	}
+
+	go s.Start()
+
+	timeout := 10 * time.Second
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	select {
+	case <-ctx.Done():
+		if ctx.Err() == context.DeadlineExceeded {
+			return fmt.Errorf("leaf node start timed out after %v", timeout)
+		}
+	case <-time.After(500 * time.Millisecond):
+		if !s.ReadyForConnections(timeout) {
+			return fmt.Errorf("leaf node failed to become ready within timeout period")
+		}
+
+		logger.Info("Leaf node is ready")
+	}
+
+	return nil
+}
+
 func (c *Connector) CreateClient() (*core.Client, error) {
 
 	// Read configs
 	domain := viper.GetString("gravity.domain")
 	//	accessKey := viper.GetString("gravity.accessKey")
+
 	host := viper.GetString("gravity.host")
 	port := viper.GetInt("gravity.port")
+	connectionMode := viper.GetString("gravity.connectionMode")
+	if connectionMode == "leaf" {
+		host = "localhost"
+		port = 4222
+	}
+
 	pingInterval := viper.GetInt64("gravity.pingInterval")
 	maxPingsOutstanding := viper.GetInt("gravity.maxPingsOutstanding")
 	maxReconnects := viper.GetInt("gravity.maxReconnects")

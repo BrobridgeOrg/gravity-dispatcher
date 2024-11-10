@@ -53,8 +53,8 @@ github.com/BrobridgeOrg/gravity-sdk/v2 v2.0.10 h1:58osj4hXiX5ZK7xhRakhCeYzRtFtHU
 github.com/BrobridgeOrg/gravity-sdk/v2 v2.0.10/go.mod h1:ILCIQSq8NjtW6sWk2FfjUBhLpxgmyYrs2MPsajIXEgU=
 github.com/BrobridgeOrg/schemer v0.0.18 h1:Eot0/qHo6GYXtNxdE+ljDdO5RI5OWeCWCsbMZHS5OZs=
 github.com/BrobridgeOrg/schemer v0.0.18/go.mod h1:k/tJt7IjTJmNQD0uJwJb9Ej1a7MeSBaAdjFzYbLKLMU=
-github.com/BrobridgeOrg/sequential-task-runner v0.0.1 h1:lOb3OmWWx7Mwb9x4viqYwp4zpu0s5NMIVXTFbkfoQi4=
-github.com/BrobridgeOrg/sequential-task-runner v0.0.1/go.mod h1:NwlXGvGRb3JqwTuKm/WpqMsG4xjx2f9oW1ywiYUUEhY=
+github.com/BrobridgeOrg/sequential-task-runner v0.0.2 h1:y+cv2lrcdXPxOapyiewLhqQdNoMWtdbJOZmdsQRNWv4=
+github.com/BrobridgeOrg/sequential-task-runner v0.0.2/go.mod h1:NwlXGvGRb3JqwTuKm/WpqMsG4xjx2f9oW1ywiYUUEhY=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
 github.com/DataDog/datadog-go v3.2.0+incompatible/go.mod h1:LButxg5PwREeZtORoXG3tL4fMGNddJ+vMq1mwgfaqoQ=
