@@ -45,7 +45,7 @@ func NewProcessor(opts ...func(*Processor)) *Processor {
 
 	// Initializing sequential task runner
 	p.runner = sequential_task_runner.NewRunner(
-		sequential_task_runner.WithWorkerCount(8),
+		sequential_task_runner.WithWorkerCount(32),
 		sequential_task_runner.WithMaxPendingCount(2048),
 		sequential_task_runner.WithWorkerHandler(func(workerID int, task interface{}) interface{} {
 			return p.process(task.(*Message))

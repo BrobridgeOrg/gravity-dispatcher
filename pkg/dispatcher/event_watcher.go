@@ -214,7 +214,7 @@ func (ew *EventWatcher) AssertConsumer() (*nats.ConsumerInfo, error) {
 			//			DeliverSubject: nats.NewInbox(),
 			FilterSubject: subject,
 			AckPolicy:     nats.AckAllPolicy,
-			//			MaxAckPending: 2048,
+			MaxAckPending: 2048,
 		}
 
 		c, err := js.AddConsumer(streamName, &cfg)
