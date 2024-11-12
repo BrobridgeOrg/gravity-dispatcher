@@ -8,6 +8,13 @@ import (
 
 	"github.com/BrobridgeOrg/gravity-sdk/v2/core"
 	"github.com/nats-io/nats.go"
+	"github.com/spf13/viper"
+)
+
+const (
+	DefaultEventWatcherMaxPendingCount = 8192              // 8K messages
+	DefaultEventWatcherBufferSize      = 1024 * 1000 * 128 // 128MB
+	DefaultEventWatcherMaxWait         = time.Second       // 1 second
 )
 
 const (
@@ -108,6 +115,20 @@ func (ew *EventWatcher) GetEvent(name string) *Event {
 
 func (ew *EventWatcher) Init() error {
 
+	viper.SetDefault("eventwatcher.buffer_size", DefaultEventWatcherBufferSize)
+	viper.SetDefault("eventwatcher.max_pending_count", DefaultEventWatcherMaxPendingCount)
+	viper.SetDefault("eventwatcher.max_wait", DefaultEventWatcherMaxWait)
+
+	bufferSize := viper.GetInt("eventwatcher.buffer_size")
+	maxPendingCount := viper.GetInt("eventwatcher.max_pending_count")
+	maxWait := viper.GetDuration("eventwatcher.max_wait")
+
+	logger.Info("Initializing event watcher",
+		zap.Int("buffer_size", bufferSize),
+		zap.Int("max_pending_count", maxPendingCount),
+		zap.Duration("max_wait", maxWait),
+	)
+
 	// Preparing JetStream
 	js, err := ew.client.GetJetStream()
 	if err != nil {
@@ -183,6 +204,8 @@ func (ew *EventWatcher) Init() error {
 
 func (ew *EventWatcher) AssertConsumer() (*nats.ConsumerInfo, error) {
 
+	maxPendingCount := viper.GetInt("eventwatcher.max_pending_count")
+
 	// Preparing JetStream
 	js, err := ew.client.GetJetStream()
 	if err != nil {
@@ -207,6 +230,7 @@ func (ew *EventWatcher) AssertConsumer() (*nats.ConsumerInfo, error) {
 		logger.Info("Creating a new consumer...",
 			zap.String("stream", streamName),
 			zap.String("subject", subject),
+			zap.Int("max_pending_count", maxPendingCount),
 		)
 
 		cfg := nats.ConsumerConfig{
@@ -214,7 +238,7 @@ func (ew *EventWatcher) AssertConsumer() (*nats.ConsumerInfo, error) {
 			//			DeliverSubject: nats.NewInbox(),
 			FilterSubject: subject,
 			AckPolicy:     nats.AckAllPolicy,
-			MaxAckPending: 2048,
+			MaxAckPending: maxPendingCount,
 		}
 
 		c, err := js.AddConsumer(streamName, &cfg)
@@ -235,6 +259,10 @@ func (ew *EventWatcher) AssertConsumer() (*nats.ConsumerInfo, error) {
 
 func (ew *EventWatcher) subscribe(subject string, fn func(string, *nats.Msg)) error {
 
+	bufferSize := viper.GetInt("eventwatcher.buffer_size")
+	maxPendingCount := viper.GetInt("eventwatcher.max_pending_count")
+	maxWait := viper.GetDuration("eventwatcher.max_wait")
+
 	// Preparing JetStream
 	js, err := ew.client.GetJetStream()
 	if err != nil {
@@ -246,7 +274,7 @@ func (ew *EventWatcher) subscribe(subject string, fn func(string, *nats.Msg)) er
 		return err
 	}
 
-	sub.SetPendingLimits(2048, -1)
+	sub.SetPendingLimits(maxPendingCount, bufferSize)
 	ew.client.GetConnection().Flush()
 
 	ew.sub = sub
@@ -261,7 +289,7 @@ func (ew *EventWatcher) subscribe(subject string, fn func(string, *nats.Msg)) er
 
 		for ew.running {
 
-			msgs, err := sub.Fetch(2048, nats.MaxWait(time.Second))
+			msgs, err := sub.Fetch(maxPendingCount, nats.MaxWait(maxWait))
 			if err != nil {
 
 				if err == nats.ErrTimeout {

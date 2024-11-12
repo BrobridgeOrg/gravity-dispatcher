@@ -12,7 +12,12 @@ import (
 	buffered_input "github.com/cfsghost/buffered-input"
 	"github.com/google/uuid"
 	"github.com/nats-io/nats.go"
+	"github.com/spf13/viper"
 	"go.uber.org/zap"
+)
+
+const (
+	DefaultProductMaxFlushInterval = 100 * time.Millisecond
 )
 
 const (
@@ -237,15 +242,29 @@ func NewProduct(pm *ProductManager) *Product {
 	return p
 }
 
-func (p *Product) reset() {
+func (p *Product) initDispatcherBuffer() {
+
+	viper.SetDefault("product.max_flush_interval", DefaultProductMaxFlushInterval)
+
+	maxFlushInterval := viper.GetDuration("product.max_flush_interval")
+
+	logger.Info("Initializing dispatcher buffer",
+		zap.String("product", p.Name),
+		zap.Duration("max_flush_interval", maxFlushInterval),
+	)
 
 	// Initializing buffered input
 	opts := buffered_input.NewOptions()
 	opts.ChunkSize = 1000
 	opts.ChunkCount = 1000
-	opts.Timeout = 100 * time.Millisecond
+	opts.Timeout = maxFlushInterval
 	opts.Handler = p.dispatcherBufferHandler
 	p.dispatcherBuffer = buffered_input.NewBufferedInput(opts)
+}
+
+func (p *Product) reset() {
+
+	p.initDispatcherBuffer()
 
 	// Initializing processer
 	p.processor = NewProcessor(

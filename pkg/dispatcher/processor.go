@@ -11,7 +11,13 @@ import (
 	sequential_task_runner "github.com/BrobridgeOrg/sequential-task-runner"
 	"github.com/lithammer/go-jump-consistent-hash"
 	"github.com/nats-io/nats.go"
+	"github.com/spf13/viper"
 	"go.uber.org/zap"
+)
+
+const (
+	DefaultProcessorWorkerCount     = 8
+	DefaultProcessorMaxPendingCount = 2048
 )
 
 var productEventPool = sync.Pool{
@@ -43,10 +49,21 @@ func NewProcessor(opts ...func(*Processor)) *Processor {
 		o(p)
 	}
 
+	viper.SetDefault("processor.worker_count", DefaultProcessorWorkerCount)
+	viper.SetDefault("processor.max_pending_count", DefaultProcessorMaxPendingCount)
+
+	workerCount := viper.GetInt("processor.worker_count")
+	maxPendingCount := viper.GetInt("processor.max_pending_count")
+
+	logger.Info("Initializing processor",
+		zap.Int("worker_count", workerCount),
+		zap.Int("max_pending_count", maxPendingCount),
+	)
+
 	// Initializing sequential task runner
 	p.runner = sequential_task_runner.NewRunner(
-		sequential_task_runner.WithWorkerCount(32),
-		sequential_task_runner.WithMaxPendingCount(2048),
+		sequential_task_runner.WithWorkerCount(workerCount),
+		sequential_task_runner.WithMaxPendingCount(maxPendingCount),
 		sequential_task_runner.WithWorkerHandler(func(workerID int, task interface{}) interface{} {
 			return p.process(task.(*Message))
 		}),
