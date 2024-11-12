@@ -6,7 +6,7 @@ toolchain go1.23.1
 
 require (
 	github.com/BrobridgeOrg/gravity-sdk/v2 v2.0.10
-	github.com/BrobridgeOrg/schemer v0.0.20
+	github.com/BrobridgeOrg/schemer v0.0.21
 	github.com/BrobridgeOrg/sequential-task-runner v0.0.2
 	github.com/cfsghost/buffered-input v0.0.3
 	github.com/d5/tengo v1.24.8
