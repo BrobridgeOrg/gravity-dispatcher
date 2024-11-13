@@ -51,8 +51,8 @@ cloud.google.com/go/storage v1.14.0/go.mod h1:GrKmX003DSIwi9o29oFT7YDnHYwZoctc3f
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
 github.com/BrobridgeOrg/gravity-sdk/v2 v2.0.10 h1:58osj4hXiX5ZK7xhRakhCeYzRtFtHU41j/RRd2ib4Jo=
 github.com/BrobridgeOrg/gravity-sdk/v2 v2.0.10/go.mod h1:ILCIQSq8NjtW6sWk2FfjUBhLpxgmyYrs2MPsajIXEgU=
-github.com/BrobridgeOrg/schemer v0.0.21 h1:rCBuNXGeQUz6UmEmRoz6060sRDz7sVxCMZ1IA/4NESA=
-github.com/BrobridgeOrg/schemer v0.0.21/go.mod h1:1/n/HVggY5kqezej6k4+9JSlnkWpYIUeAlIEuvIiAN0=
+github.com/BrobridgeOrg/schemer v0.0.22 h1:GcKEtSMYSdgXeSA7boResK2Qlk2771AllAFfEvXUPio=
+github.com/BrobridgeOrg/schemer v0.0.22/go.mod h1:/RLqIukrLHz5f+zuUN9YV1l60KJtSgf+gAgz+DX6e64=
 github.com/BrobridgeOrg/sequential-task-runner v0.0.2 h1:y+cv2lrcdXPxOapyiewLhqQdNoMWtdbJOZmdsQRNWv4=
 github.com/BrobridgeOrg/sequential-task-runner v0.0.2/go.mod h1:NwlXGvGRb3JqwTuKm/WpqMsG4xjx2f9oW1ywiYUUEhY=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
@@ -117,8 +117,8 @@ github.com/dlclark/regexp2 v1.4.1-0.20201116162257-a2a8dda75c91/go.mod h1:2pZnwu
 github.com/dlclark/regexp2 v1.11.4 h1:rPYF9/LECdNymJufQKmri9gV604RvvABwgOA8un7yAo=
 github.com/dlclark/regexp2 v1.11.4/go.mod h1:DHkYz0B9wPfa6wondMfaivmHpzrQ3v9q8cnmRbL6yW8=
 github.com/dop251/goja v0.0.0-20211022113120-dc8c55024d06/go.mod h1:R9ET47fwRVRPZnOGvHxxhuZcbrMCuiqOz3Rlrh4KSnk=
-github.com/dop251/goja v0.0.0-20240927123429-241b342198c2 h1:Ux9RXuPQmTB4C1MKagNLme0krvq8ulewfor+ORO/QL4=
-github.com/dop251/goja v0.0.0-20240927123429-241b342198c2/go.mod h1:MxLav0peU43GgvwVgNbLAj1s/bSGboKkhuULvq/7hx4=
+github.com/dop251/goja v0.0.0-20241024094426-79f3a7efcdbd h1:QMSNEh9uQkDjyPwu/J541GgSH+4hw+0skJDIj9HJ3mE=
+github.com/dop251/goja v0.0.0-20241024094426-79f3a7efcdbd/go.mod h1:MxLav0peU43GgvwVgNbLAj1s/bSGboKkhuULvq/7hx4=
 github.com/dop251/goja_nodejs v0.0.0-20210225215109-d91c329300e7/go.mod h1:hn7BA7c8pLvoGndExHudxTDKZ84Pyvv+90pbBjbTz0Y=
 github.com/dop251/goja_nodejs v0.0.0-20211022123610-8dd9abb0616d/go.mod h1:DngW8aVqWbuLRMHItjPUyqdj+HWPvnQe8V8y1nDpIbM=
 github.com/envoyproxy/go-control-plane v0.9.0/go.mod h1:YTl/9mNaCwkRvm6d1a2C3ymFceY/DCBVvsKhRF0iEA4=

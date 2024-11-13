@@ -6,7 +6,7 @@ toolchain go1.23.1
 
 require (
 	github.com/BrobridgeOrg/gravity-sdk/v2 v2.0.10
-	github.com/BrobridgeOrg/schemer v0.0.21
+	github.com/BrobridgeOrg/schemer v0.0.22
 	github.com/BrobridgeOrg/sequential-task-runner v0.0.2
 	github.com/cfsghost/buffered-input v0.0.3
 	github.com/d5/tengo v1.24.8
@@ -26,7 +26,7 @@ require (
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dlclark/regexp2 v1.11.4 // indirect
-	github.com/dop251/goja v0.0.0-20240927123429-241b342198c2 // indirect
+	github.com/dop251/goja v0.0.0-20241024094426-79f3a7efcdbd // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/go-sourcemap/sourcemap v2.1.3+incompatible // indirect
 	github.com/google/pprof v0.0.0-20230207041349-798e818bf904 // indirect
@@ -64,5 +64,8 @@ require (
 //replace github.com/BrobridgeOrg/gravity-sdk/v2 => ../gravity-sdk
 
 // replace github.com/BrobridgeOrg/compton => ../../compton
+//replace github.com/BrobridgeOrg/schemer => ../../schemer
+
+//replace github.com/BrobridgeOrg/schemer/runtime/goja => ../../schemer/runtime/goja
 
 //replace github.com/BrobridgeOrg/sequential-task-runner => ../../sequential-task-runner

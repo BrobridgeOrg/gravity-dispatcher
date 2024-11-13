@@ -3,6 +3,7 @@ package rule_manager
 import (
 	product_sdk "github.com/BrobridgeOrg/gravity-sdk/v2/product"
 	"github.com/BrobridgeOrg/schemer"
+	goja_runtime "github.com/BrobridgeOrg/schemer/runtime/goja"
 )
 
 type HandlerType int32
@@ -27,7 +28,11 @@ func NewHandler(config *product_sdk.HandlerConfig, sourceSchema *schemer.Schema,
 		Type: HandlerTypes["script"],
 	}
 
-	handler.Transformer = schemer.NewTransformer(sourceSchema, targetSchema)
+	handler.Transformer = schemer.NewTransformer(
+		sourceSchema,
+		targetSchema,
+		schemer.WithRuntime(goja_runtime.NewRuntime()),
+	)
 
 	if config != nil {
 		if t, ok := HandlerTypes[config.Type]; ok {
