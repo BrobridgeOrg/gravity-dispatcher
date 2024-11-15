@@ -11,6 +11,7 @@ import (
 	"github.com/BrobridgeOrg/schemer"
 	buffered_input "github.com/cfsghost/buffered-input"
 	"github.com/google/uuid"
+	"github.com/klauspost/compress/s2"
 	"github.com/nats-io/nats.go"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
@@ -387,12 +388,29 @@ func (p *Product) dispatch(msg *Message) {
 }
 
 func (p *Product) handleMessage(eventName string, msg *nats.Msg) {
+
+	data := msg.Data
+
+	// Decompress message
+	if msg.Header.Get("Content-Encoding") == "s2" {
+		decompressedMessage, err := s2.Decode(nil, msg.Data)
+		if err != nil {
+			logger.Error("Failed to decompress message",
+				zap.Error(err),
+			)
+
+			return
+		}
+
+		data = decompressedMessage
+	}
+
 	m := NewMessage()
 	m.Publisher = p.manager.dispatcher.publisherJSCtx
 	m.Event = eventName
 	m.Msg = msg
 	m.Product = p
-	m.Raw = msg.Data
+	m.Raw = data
 
 	if len(eventName) > 0 {
 		m.Ignore = false
