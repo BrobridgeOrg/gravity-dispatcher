@@ -4,9 +4,12 @@ import (
 	"testing"
 
 	product_sdk "github.com/BrobridgeOrg/gravity-sdk/v2/product"
+	"go.uber.org/zap"
 )
 
 func BenchmarkProcessor(b *testing.B) {
+
+	logger = zap.NewNop()
 
 	// Preparing processor
 	results := make(chan interface{}, 1024)

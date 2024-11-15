@@ -74,7 +74,7 @@ func GetFieldValue(r *record_type.Record, fieldName string) (interface{}, error)
 
 func TestProcessorOutput(t *testing.T) {
 
-	logger = zap.NewExample()
+	logger = zap.NewNop()
 
 	done := make(chan struct{})
 
@@ -116,7 +116,7 @@ func TestProcessorOutput(t *testing.T) {
 
 func TestProcessor_UpdateNestedFields(t *testing.T) {
 
-	logger = zap.NewExample()
+	logger = zap.NewNop()
 
 	done := make(chan struct{})
 
@@ -169,7 +169,7 @@ func TestProcessor_UpdateNestedFields(t *testing.T) {
 
 func TestProcessorOutputsWithMultipleInputs(t *testing.T) {
 
-	logger = zap.NewExample()
+	logger = zap.NewNop()
 
 	var wg sync.WaitGroup
 	count := int64(0)
@@ -226,7 +226,7 @@ func TestProcessorOutputsWithMultipleInputs(t *testing.T) {
 
 func TestProcessorOutputsWithVariousInputs(t *testing.T) {
 
-	logger = zap.NewExample()
+	logger = zap.NewNop()
 
 	var wg sync.WaitGroup
 	count := int64(0)

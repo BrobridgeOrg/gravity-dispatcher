@@ -6,7 +6,7 @@ toolchain go1.23.1
 
 require (
 	github.com/BrobridgeOrg/gravity-sdk/v2 v2.0.10
-	github.com/BrobridgeOrg/schemer v0.0.22
+	github.com/BrobridgeOrg/schemer v0.0.23
 	github.com/BrobridgeOrg/sequential-task-runner v0.0.2
 	github.com/cfsghost/buffered-input v0.0.3
 	github.com/d5/tengo v1.24.8
@@ -19,6 +19,7 @@ require (
 	github.com/spf13/cobra v1.3.0
 	github.com/spf13/viper v1.10.1
 	github.com/stretchr/testify v1.9.0
+	go.uber.org/automaxprocs v1.6.0
 	go.uber.org/fx v1.17.0
 	go.uber.org/zap v1.21.0
 )

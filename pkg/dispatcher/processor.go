@@ -2,6 +2,7 @@ package dispatcher
 
 import (
 	"fmt"
+	"runtime"
 	"strings"
 	"sync"
 
@@ -59,6 +60,15 @@ func NewProcessor(opts ...func(*Processor)) *Processor {
 		zap.Int("worker_count", workerCount),
 		zap.Int("max_pending_count", maxPendingCount),
 	)
+
+	// Check if cpu count is less than worker count
+	if runtime.GOMAXPROCS(0) < workerCount {
+		runtime.GOMAXPROCS(workerCount + 4)
+		logger.Warn("Worker count is greater than maxprocs, so increase maxprocs",
+			zap.Int("worker_count", workerCount),
+			zap.Int("new_maxprocs", workerCount+4),
+		)
+	}
 
 	// Initializing sequential task runner
 	p.runner = sequential_task_runner.NewRunner(

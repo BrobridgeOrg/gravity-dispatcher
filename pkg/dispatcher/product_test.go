@@ -60,7 +60,7 @@ func CreateTestProductRule() *product_sdk.Rule {
 
 func TestProductMessageHandler(t *testing.T) {
 
-	logger = zap.NewExample()
+	logger = zap.NewNop()
 	var wg sync.WaitGroup
 
 	testData := MessageRawData{
@@ -117,7 +117,7 @@ func TestProductMessageHandler(t *testing.T) {
 
 func TestProductTransformerSrcipt(t *testing.T) {
 
-	logger = zap.NewExample()
+	logger = zap.NewNop()
 	var wg sync.WaitGroup
 
 	testData := MessageRawData{
@@ -183,7 +183,7 @@ func TestProductTransformerSrcipt(t *testing.T) {
 
 func TestProductMessageHandler_StressTest(t *testing.T) {
 
-	logger = zap.NewExample()
+	logger = zap.NewNop()
 
 	targetNum := 100000
 

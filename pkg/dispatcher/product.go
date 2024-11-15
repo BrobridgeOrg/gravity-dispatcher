@@ -255,7 +255,7 @@ func (p *Product) initDispatcherBuffer() {
 
 	// Initializing buffered input
 	opts := buffered_input.NewOptions()
-	opts.ChunkSize = 1000
+	opts.ChunkSize = 2000
 	opts.ChunkCount = 1000
 	opts.Timeout = maxFlushInterval
 	opts.Handler = p.dispatcherBufferHandler
