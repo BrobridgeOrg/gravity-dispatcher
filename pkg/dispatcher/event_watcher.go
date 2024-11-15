@@ -174,7 +174,8 @@ func (ew *EventWatcher) Init() error {
 			Subjects: []string{
 				subject,
 			},
-			Replicas: 3,
+			Compression: nats.S2Compression,
+			Replicas:    3,
 			//			Retention: nats.InterestPolicy,
 		}
 
