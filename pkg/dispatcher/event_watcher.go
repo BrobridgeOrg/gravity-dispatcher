@@ -170,10 +170,14 @@ func (ew *EventWatcher) Init() error {
 		sConfig := &nats.StreamConfig{
 			Name:        streamName,
 			Description: "Gravity domain event store",
-			Duplicates:  30 * time.Minute,
+			Duplicates:  10 * time.Minute,
 			Subjects: []string{
 				subject,
 			},
+			Retention:   nats.LimitsPolicy,
+			DenyDelete:  true,
+			MaxMsgSize:  8 * 1024 * 1024 * 1024, // 8GB
+			MaxAge:      7 * 24 * time.Hour,
 			Compression: nats.S2Compression,
 			Replicas:    3,
 			//			Retention: nats.InterestPolicy,

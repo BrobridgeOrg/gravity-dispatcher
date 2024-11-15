@@ -90,11 +90,14 @@ func (pm *ProductManager) assertProductStream(name string, streamName string) er
 		sc := &nats.StreamConfig{
 			Name:        streamName,
 			Description: "Gravity product event store",
-			Duplicates:  10 * time.Minute,
+			Duplicates:  5 * time.Minute,
 			Subjects: []string{
 				subject,
 			},
 			Retention:   nats.LimitsPolicy,
+			DenyDelete:  true,
+			MaxMsgSize:  8 * 1024 * 1024 * 1024, // 8GB
+			MaxAge:      7 * 24 * time.Hour,
 			Compression: nats.S2Compression,
 			Replicas:    3,
 		}
