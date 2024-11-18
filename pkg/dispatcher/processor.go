@@ -3,6 +3,7 @@ package dispatcher
 import (
 	"fmt"
 	"runtime"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -153,7 +154,8 @@ func (p *Processor) process(msg *Message) *Message {
 	if msg.Msg != nil {
 		// Unique message ID
 		meta, _ := msg.Msg.Metadata()
-		msg.ID = fmt.Sprintf("%d", meta.Sequence.Stream)
+		//		msg.ID = fmt.Sprintf("%d", meta.Sequence.Stream)
+		msg.ID = strconv.FormatUint(meta.Sequence.Stream, 16)
 		header = msg.Msg.Header
 	}
 
