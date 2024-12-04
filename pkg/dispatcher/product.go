@@ -369,7 +369,12 @@ func (p *Product) dispatcherBufferHandler(chunk []interface{}) {
 
 	// Wait for all messages to be dispatched
 	for _, m := range msgs {
-		m.Wait()
+		err := m.Wait()
+		if err != nil {
+			logger.Error("Failed to wait for ack",
+				zap.Error(err),
+			)
+		}
 	}
 
 	if doneCount < len(chunk) {
