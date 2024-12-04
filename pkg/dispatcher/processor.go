@@ -2,6 +2,7 @@ package dispatcher
 
 import (
 	"fmt"
+	"hash"
 	"runtime"
 	"strconv"
 	"strings"
@@ -38,12 +39,14 @@ type Processor struct {
 	runner        *sequential_task_runner.Runner
 	outputHandler func(*Message)
 	domain        string
+	hash          hash.Hash64
 }
 
 func NewProcessor(opts ...func(*Processor)) *Processor {
 
 	p := &Processor{
 		outputHandler: func(*Message) {},
+		hash:          jump.NewCRC64(),
 	}
 
 	// Apply options
@@ -225,7 +228,7 @@ func (p *Processor) calculatePrimaryKey(msg *Message) {
 	}
 */
 func (p *Processor) calculatePartition(msg *Message) {
-	msg.Partition = jump.HashString(BytesToString(msg.ProductEvent.PrimaryKey), 256, jump.NewCRC64())
+	msg.Partition = jump.HashString(BytesToString(msg.ProductEvent.PrimaryKey), 256, p.hash)
 }
 
 func (p *Processor) convert(msg *Message) (*gravity_sdk_types_product_event.ProductEvent, error) {
