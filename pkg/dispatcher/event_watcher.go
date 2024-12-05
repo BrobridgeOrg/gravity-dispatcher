@@ -303,6 +303,10 @@ func (ew *EventWatcher) subscribe(subject string, fn func(string, *nats.Msg)) er
 				logger.Error(err.Error())
 			}
 
+			if len(msgs) == 0 {
+				continue
+			}
+
 			logger.Info("received messages",
 				zap.String("subject", subject),
 				zap.String("durable", ew.durable),
