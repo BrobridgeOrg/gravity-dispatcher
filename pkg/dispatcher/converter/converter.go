@@ -73,13 +73,12 @@ func convert(def *schemer.Definition, data interface{}) (*record_type.Value, err
 
 	case schemer.TYPE_MAP:
 
-		v := reflect.ValueOf(data)
-
-		if v.Kind() != reflect.Map {
+		v, ok := data.(map[string]interface{})
+		if !ok {
 			return nil, fmt.Errorf("Not a map object")
 		}
 
-		fields, err := Convert(def.Schema, data.(map[string]interface{}))
+		fields, err := Convert(def.Schema, v)
 		if err != nil {
 			return nil, err
 		}
