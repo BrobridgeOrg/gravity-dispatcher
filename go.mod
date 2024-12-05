@@ -6,20 +6,20 @@ toolchain go1.23.1
 
 require (
 	github.com/BrobridgeOrg/gravity-sdk/v2 v2.0.10
-	github.com/BrobridgeOrg/schemer v0.0.23
+	github.com/BrobridgeOrg/schemer v0.0.24
 	github.com/BrobridgeOrg/sequential-task-runner v0.0.2
 	github.com/cfsghost/buffered-input v0.0.3
 	github.com/d5/tengo v1.24.8
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/google/uuid v1.3.0
 	github.com/json-iterator/go v1.1.12
+	github.com/klauspost/compress v1.17.11
 	github.com/lithammer/go-jump-consistent-hash v1.0.2
 	github.com/nats-io/nats-server/v2 v2.10.22
 	github.com/nats-io/nats.go v1.37.0
 	github.com/spf13/cobra v1.3.0
 	github.com/spf13/viper v1.10.1
 	github.com/stretchr/testify v1.9.0
-	go.uber.org/automaxprocs v1.6.0
 	go.uber.org/fx v1.17.0
 	go.uber.org/zap v1.21.0
 )
@@ -33,7 +33,6 @@ require (
 	github.com/google/pprof v0.0.0-20230207041349-798e818bf904 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
-	github.com/klauspost/compress v1.17.11 // indirect
 	github.com/magiconair/properties v1.8.6 // indirect
 	github.com/minio/highwayhash v1.0.3 // indirect
 	github.com/mitchellh/mapstructure v1.4.3 // indirect
@@ -44,6 +43,7 @@ require (
 	github.com/nats-io/nuid v1.0.1 // indirect
 	github.com/pelletier/go-toml v1.9.4 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/rogpeppe/go-internal v1.13.1 // indirect
 	github.com/spf13/afero v1.8.1 // indirect
 	github.com/spf13/cast v1.4.1 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
