@@ -84,8 +84,8 @@ func (d *Dispatcher) productSettingsUpdated(entry *config_store.ConfigEntry) {
 	if err != nil {
 		logger.Error("Failed to load data product settings",
 			zap.String("product", entry.Key),
+			zap.Error(err),
 		)
-		logger.Error(err.Error())
 		return
 	}
 }

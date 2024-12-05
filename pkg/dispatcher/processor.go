@@ -140,8 +140,10 @@ func (p *Processor) process(msg *Message) *Message {
 	// Mapping and convert raw data to product_event object
 	product_event, err := p.convert(msg)
 	if err != nil {
-		// Failed to parse payload
-		logger.Error(err.Error())
+		// Failed to process payload
+		logger.Error("Failed to process payload",
+			zap.Error(err),
+		)
 		msg.Ignore = true
 		return msg
 	}
