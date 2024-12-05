@@ -19,6 +19,9 @@ import (
 
 const (
 	DefaultProductMaxFlushInterval = 100 * time.Millisecond
+	DefaultProductMaxStreamBytes   = 8 * 1024 * 1024 * 1024 // 8GB
+	DefaultProductMaxStreamAge     = 7 * 24 * time.Hour     // 1 week
+	DefaultProductDuplicates       = 5 * time.Minute        // 5 minutes
 )
 
 const (
@@ -46,6 +49,14 @@ func NewProductManager(d *Dispatcher) *ProductManager {
 }
 
 func (pm *ProductManager) assertProductStream(name string, streamName string) error {
+
+	viper.SetDefault("product.max_stream_bytes", DefaultProductMaxStreamBytes)
+	viper.SetDefault("product.max_stream_age", DefaultProductMaxStreamAge)
+	viper.SetDefault("product.duplicates", DefaultProductDuplicates)
+
+	maxStreamBytes := viper.GetInt64("product.max_stream_bytes")
+	maxStreamAge := viper.GetDuration("product.max_stream_age")
+	duplicates := viper.GetDuration("product.duplicates")
 
 	// Preparing JetStream
 	js, err := pm.dispatcher.connector.GetClient().GetJetStream()
@@ -91,14 +102,13 @@ func (pm *ProductManager) assertProductStream(name string, streamName string) er
 		sc := &nats.StreamConfig{
 			Name:        streamName,
 			Description: "Gravity product event store",
-			Duplicates:  5 * time.Minute,
+			Duplicates:  duplicates,
 			Subjects: []string{
 				subject,
 			},
 			Retention:   nats.LimitsPolicy,
-			DenyDelete:  true,
-			MaxBytes:    8 * 1024 * 1024 * 1024, // 8GB
-			MaxAge:      7 * 24 * time.Hour,
+			MaxBytes:    maxStreamBytes,
+			MaxAge:      maxStreamAge,
 			Compression: nats.S2Compression,
 			Replicas:    3,
 		}

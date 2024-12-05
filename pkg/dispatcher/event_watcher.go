@@ -175,7 +175,6 @@ func (ew *EventWatcher) Init() error {
 				subject,
 			},
 			Retention:   nats.LimitsPolicy,
-			DenyDelete:  true,
 			MaxBytes:    8 * 1024 * 1024 * 1024, // 8GB
 			MaxAge:      7 * 24 * time.Hour,
 			Compression: nats.S2Compression,
