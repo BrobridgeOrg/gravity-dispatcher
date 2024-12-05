@@ -78,7 +78,6 @@ func (pm *ProductManager) assertProductStream(name string, streamName string) er
 	if err != nil {
 		if err != nats.ErrStreamNotFound {
 			return err
-
 		}
 
 		logger.Warn("Product stream is not ready",
@@ -97,6 +96,9 @@ func (pm *ProductManager) assertProductStream(name string, streamName string) er
 			zap.String("product", name),
 			zap.String("stream", streamName),
 			zap.String("subject", subject),
+			zap.Int64("max_stream_bytes", maxStreamBytes),
+			zap.Duration("max_stream_age", maxStreamAge),
+			zap.Duration("duplicates", duplicates),
 		)
 
 		sc := &nats.StreamConfig{
