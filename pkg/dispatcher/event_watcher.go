@@ -12,9 +12,12 @@ import (
 )
 
 const (
-	DefaultEventWatcherMaxPendingCount = 8192              // 8K messages
-	DefaultEventWatcherBufferSize      = 1024 * 1000 * 128 // 128MB
-	DefaultEventWatcherMaxWait         = time.Second       // 1 second
+	DefaultEventWatcherMaxPendingCount     = 8192                   // 8K messages
+	DefaultEventWatcherBufferSize          = 1024 * 1000 * 128      // 128MB
+	DefaultEventWatcherMaxWait             = time.Second            // 1 second
+	DefaultEventWatcherMaxInputStreamBytes = 8 * 1024 * 1024 * 1024 // 8GB
+	DefaultEventWatcherMaxInputStreamAge   = 7 * 24 * time.Hour     // 1 week
+	DefaultEventWatcherInputDuplicates     = 10 * time.Minute       // 10 minutes
 )
 
 const (
@@ -118,15 +121,24 @@ func (ew *EventWatcher) Init() error {
 	viper.SetDefault("eventwatcher.buffer_size", DefaultEventWatcherBufferSize)
 	viper.SetDefault("eventwatcher.max_pending_count", DefaultEventWatcherMaxPendingCount)
 	viper.SetDefault("eventwatcher.max_wait", DefaultEventWatcherMaxWait)
+	viper.SetDefault("eventwatcher.max_input_stream_age", DefaultEventWatcherMaxInputStreamAge)
+	viper.SetDefault("eventwatcher.max_input_stream_bytes", DefaultEventWatcherMaxInputStreamBytes)
+	viper.SetDefault("eventwatcher.input_duplicates", DefaultEventWatcherInputDuplicates)
 
 	bufferSize := viper.GetInt("eventwatcher.buffer_size")
 	maxPendingCount := viper.GetInt("eventwatcher.max_pending_count")
 	maxWait := viper.GetDuration("eventwatcher.max_wait")
+	maxInputStreamAge := viper.GetDuration("eventwatcher.max_input_stream_age")
+	maxInputStreamBytes := viper.GetInt64("eventwatcher.max_input_stream_bytes")
+	inputDuplicates := viper.GetDuration("eventwatcher.input_duplicates")
 
 	logger.Info("Initializing event watcher",
 		zap.Int("buffer_size", bufferSize),
 		zap.Int("max_pending_count", maxPendingCount),
 		zap.Duration("max_wait", maxWait),
+		zap.Duration("max_input_stream_age", maxInputStreamAge),
+		zap.Int64("max_input_stream_bytes", maxInputStreamBytes),
+		zap.Duration("input_duplicates", inputDuplicates),
 	)
 
 	// Preparing JetStream
@@ -170,13 +182,13 @@ func (ew *EventWatcher) Init() error {
 		sConfig := &nats.StreamConfig{
 			Name:        streamName,
 			Description: "Gravity domain event store",
-			Duplicates:  10 * time.Minute,
+			Duplicates:  inputDuplicates,
 			Subjects: []string{
 				subject,
 			},
 			Retention:   nats.LimitsPolicy,
-			MaxBytes:    8 * 1024 * 1024 * 1024, // 8GB
-			MaxAge:      7 * 24 * time.Hour,
+			MaxBytes:    maxInputStreamBytes,
+			MaxAge:      maxInputStreamAge,
 			Compression: nats.S2Compression,
 			Replicas:    3,
 			//			Retention: nats.InterestPolicy,
