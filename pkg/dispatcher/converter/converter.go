@@ -78,7 +78,7 @@ func convert(def *schemer.Definition, data interface{}) (*record_type.Value, err
 			return nil, fmt.Errorf("Not a map object")
 		}
 
-		fields, err := Convert(def.Schema, v)
+		fields, err := convertMap(def.Schema, v, false)
 		if err != nil {
 			return nil, err
 		}
@@ -97,7 +97,7 @@ func convert(def *schemer.Definition, data interface{}) (*record_type.Value, err
 	return getValue(def.Type, data)
 }
 
-func Convert(schema *schemer.Schema, data map[string]interface{}) ([]*record_type.Field, error) {
+func convertMap(schema *schemer.Schema, data map[string]interface{}, isRoot bool) ([]*record_type.Field, error) {
 
 	fields := make([]*record_type.Field, 0)
 
@@ -124,7 +124,7 @@ func Convert(schema *schemer.Schema, data map[string]interface{}) ([]*record_typ
 
 	for k, v := range data {
 
-		if k == "$removedFields" {
+		if isRoot && k == "$removedFields" {
 
 			switch d := v.(type) {
 			case []interface{}:
@@ -180,28 +180,10 @@ func Convert(schema *schemer.Schema, data map[string]interface{}) ([]*record_typ
 
 		fields = append(fields, field)
 	}
-	/*
-		for fieldName, def := range schema.Fields {
 
-			value, ok := data[fieldName]
-			if !ok {
-				continue
-			}
-
-			// Convert raw data
-			v, err := convert(def, value)
-			if err != nil {
-				fmt.Println(err)
-				continue
-			}
-
-			field := &record_type.Field{
-				Name:  fieldName,
-				Value: v,
-			}
-
-			fields = append(fields, field)
-		}
-	*/
 	return fields, nil
+}
+
+func Convert(schema *schemer.Schema, data map[string]interface{}) ([]*record_type.Field, error) {
+	return convertMap(schema, data, true)
 }

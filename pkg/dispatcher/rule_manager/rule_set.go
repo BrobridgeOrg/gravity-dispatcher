@@ -29,7 +29,7 @@ func (rm *RuleSet) Get(id string) *Rule {
 
 func (rm *RuleSet) List() []*Rule {
 
-	rules := make([]*Rule, 0)
+	rules := make([]*Rule, 0, len(rm.rules))
 
 	for _, rule := range rm.rules {
 		rules = append(rules, rule)
