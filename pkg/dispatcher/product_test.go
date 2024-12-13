@@ -6,7 +6,7 @@ import (
 
 	product_sdk "github.com/BrobridgeOrg/gravity-sdk/v2/product"
 	record_type "github.com/BrobridgeOrg/gravity-sdk/v2/types/record"
-	"github.com/d5/tengo/assert"
+	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )
 

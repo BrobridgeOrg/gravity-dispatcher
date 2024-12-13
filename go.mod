@@ -9,7 +9,6 @@ require (
 	github.com/BrobridgeOrg/schemer v0.0.27
 	github.com/BrobridgeOrg/sequential-task-runner v0.0.2
 	github.com/cfsghost/buffered-input v0.0.3
-	github.com/d5/tengo v1.24.8
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/google/uuid v1.3.0
 	github.com/json-iterator/go v1.1.12
