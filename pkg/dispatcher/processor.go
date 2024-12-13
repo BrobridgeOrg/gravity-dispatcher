@@ -197,16 +197,12 @@ func (p *Processor) checkRule(msg *Message) bool {
 		return false
 	}
 
-	// Get matched rules by event
-	rules := msg.Product.Rules.GetRulesByEvent(msg.Event)
-	if len(rules) == 0 {
-		logger.Warn("Ignore event",
-			zap.String("event", msg.Event),
-		)
+	rule := msg.Product.Rules.GetRuleByEvent(msg.Event)
+	if rule == nil {
 		return false
 	}
 
-	msg.Rule = rules[0]
+	msg.Rule = rule
 
 	return true
 }
@@ -244,11 +240,12 @@ func (p *Processor) convert(msg *Message) (*gravity_sdk_types_product_event.Prod
 	pe.PrimaryKeys = msg.Rule.PrimaryKey
 
 	// Transforming
-	//results, err := msg.Rule.Handler.Run(nil, msg.Data.Payload)
 	results, err := msg.Rule.Transform(nil, msg.Data.Payload)
 	if err != nil {
 		return nil, err
 	}
+
+	//fmt.Println(results)
 
 	if len(results) == 0 {
 		// Ignore

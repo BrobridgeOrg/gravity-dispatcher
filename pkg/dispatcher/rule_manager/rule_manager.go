@@ -63,6 +63,16 @@ func (rm *RuleManager) GetRulesByEvent(eventName string) []*Rule {
 	return ruleSet.List()
 }
 
+func (rm *RuleManager) GetRuleByEvent(eventName string) *Rule {
+
+	ruleSet := rm.events.GetRuleSet(eventName)
+	if ruleSet == nil {
+		return nil
+	}
+
+	return ruleSet.First()
+}
+
 func (rm *RuleManager) GetEvents() []string {
 	return rm.events.GetEvents()
 }

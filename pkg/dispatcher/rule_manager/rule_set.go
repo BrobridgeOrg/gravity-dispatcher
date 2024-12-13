@@ -37,3 +37,12 @@ func (rm *RuleSet) List() []*Rule {
 
 	return rules
 }
+
+func (rm *RuleSet) First() *Rule {
+
+	for _, rule := range rm.rules {
+		return rule
+	}
+
+	return nil
+}
