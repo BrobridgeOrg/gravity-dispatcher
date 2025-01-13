@@ -58,6 +58,11 @@ func (pm *ProductManager) assertProductStream(name string, streamName string) er
 	maxStreamAge := viper.GetDuration("product.max_stream_age")
 	duplicates := viper.GetDuration("product.duplicates")
 
+	// Validate maxStreamBytes
+	if maxStreamAge <= 0 {
+		maxStreamAge = 0
+	}
+
 	// Preparing JetStream
 	js, err := pm.dispatcher.connector.GetClient().GetJetStream()
 	if err != nil {
