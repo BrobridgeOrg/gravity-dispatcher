@@ -6,7 +6,7 @@ toolchain go1.23.1
 
 require (
 	github.com/BrobridgeOrg/gravity-sdk/v2 v2.0.13
-	github.com/BrobridgeOrg/schemer v0.0.27
+	github.com/BrobridgeOrg/schemer v0.0.28
 	github.com/BrobridgeOrg/sequential-task-runner v0.0.2
 	github.com/cfsghost/buffered-input v0.0.3
 	github.com/golang-jwt/jwt v3.2.2+incompatible

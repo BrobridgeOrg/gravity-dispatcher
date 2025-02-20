@@ -51,8 +51,8 @@ cloud.google.com/go/storage v1.14.0/go.mod h1:GrKmX003DSIwi9o29oFT7YDnHYwZoctc3f
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
 github.com/BrobridgeOrg/gravity-sdk/v2 v2.0.13 h1:GEk3lfmSIhPU/rT7iC9Q6HQSQpuWOM4agJKaAVCF/ig=
 github.com/BrobridgeOrg/gravity-sdk/v2 v2.0.13/go.mod h1:P65d9RUqJ8FLlL3j0/qS2g3hU18qJQOz+YfYYRbGcUo=
-github.com/BrobridgeOrg/schemer v0.0.27 h1:wuVxMf9cPUxZfMUgVxhjLI0Mx39AGvtXn27hXAR4Tvo=
-github.com/BrobridgeOrg/schemer v0.0.27/go.mod h1:a3xT5XhWM9Jgqzq0uxn7eiCyWASWQ1RT3GZJmEiVtw8=
+github.com/BrobridgeOrg/schemer v0.0.28 h1:BMo1ATgPO99LS7AxQV2jbu7ADtzaSYABggFE0RqCvJA=
+github.com/BrobridgeOrg/schemer v0.0.28/go.mod h1:a3xT5XhWM9Jgqzq0uxn7eiCyWASWQ1RT3GZJmEiVtw8=
 github.com/BrobridgeOrg/sequential-task-runner v0.0.2 h1:y+cv2lrcdXPxOapyiewLhqQdNoMWtdbJOZmdsQRNWv4=
 github.com/BrobridgeOrg/sequential-task-runner v0.0.2/go.mod h1:NwlXGvGRb3JqwTuKm/WpqMsG4xjx2f9oW1ywiYUUEhY=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
