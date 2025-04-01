@@ -5,7 +5,7 @@ on:
     tags: [ '*' ]
     #branches: [ 'main' ]
   schedule:
-    - cron: '0 0 1 * *'
+    - cron: '0 14 1 * *'
 
 env:
   REGISTRY: ghcr.io
@@ -96,7 +96,7 @@ jobs:
     - name: Parse Trivy report
       id: parse-trivy-report
       run: |
-        report=$(cat trivy-report.txt | grep -B 2 Total)
+        report=$(cat trivy-report.txt | grep -B 2 Total || cat trivy-report.txt | grep -Ev "Legend:|-': Not scanned|0': Clean |Report Summary")
         echo "trivy_report<<EOF" >> $GITHUB_OUTPUT
         echo "$report" >> $GITHUB_OUTPUT
         echo "EOF" >> $GITHUB_OUTPUT
