@@ -48,12 +48,12 @@ jobs:
         images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
         tags: |
           type=ref,event=tag
-          type=raw,value=${{ env.LATEST_TAG }}-{{date 'YYYYMMDD'}}
-          type=raw,value=latest,enable=${{ github.event_name == 'schedule' }}
+          type=raw,value=${{ env.LATEST_TAG }}-{{date 'YYYYMMDD'}}-without-pack
+          type=raw,value=latest-without-pack,enable=${{ github.event_name == 'schedule' }}
           #type=semver,pattern={{raw}}
           #type=sha,prefix=
 
-    - name: Build and push Docker image
+    - name: Build and push Docker image without pack
       uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
       with:
         context: .
