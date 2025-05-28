@@ -1,15 +1,13 @@
 module github.com/BrobridgeOrg/gravity-dispatcher
 
-go 1.23
-
-toolchain go1.23.1
+go 1.24
 
 require (
 	github.com/BrobridgeOrg/gravity-sdk/v2 v2.0.14
 	github.com/BrobridgeOrg/schemer v0.0.28
 	github.com/BrobridgeOrg/sequential-task-runner v0.0.2
 	github.com/cfsghost/buffered-input v0.0.3
-	github.com/golang-jwt/jwt v3.2.2+incompatible
+	// github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/google/uuid v1.3.0
 	github.com/json-iterator/go v1.1.12
 	github.com/klauspost/compress v1.17.11
@@ -23,12 +21,15 @@ require (
 	go.uber.org/zap v1.21.0
 )
 
+require github.com/golang-jwt/jwt/v4 v4.5.2
+
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dlclark/regexp2 v1.11.4 // indirect
 	github.com/dop251/goja v0.0.0-20241024094426-79f3a7efcdbd // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/go-sourcemap/sourcemap v2.1.3+incompatible // indirect
+	github.com/golang-jwt/jwt/v4 v4.5.2 // indirect
 	github.com/google/pprof v0.0.0-20230207041349-798e818bf904 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
@@ -51,9 +52,9 @@ require (
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/dig v1.14.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
-	golang.org/x/crypto v0.31.0 // indirect
-	golang.org/x/sys v0.28.0 // indirect
-	golang.org/x/text v0.21.0 // indirect
+	golang.org/x/crypto v0.35.0 // indirect
+	golang.org/x/sys v0.30.0 // indirect
+	golang.org/x/text v0.22.0 // indirect
 	golang.org/x/time v0.7.0 // indirect
 	google.golang.org/protobuf v1.35.2 // indirect
 	gopkg.in/ini.v1 v1.66.4 // indirect

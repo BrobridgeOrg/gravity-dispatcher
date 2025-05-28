@@ -3,7 +3,7 @@ package system
 import (
 	"errors"
 
-	"github.com/golang-jwt/jwt"
+	"github.com/golang-jwt/jwt/v4"
 )
 
 type Permissions map[string]string
